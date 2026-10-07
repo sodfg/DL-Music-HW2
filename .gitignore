@@ -1,0 +1,20 @@
+# Python 快取與虛擬環境
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Notebook 暫存
+.ipynb_checkpoints/
+
+# 資料集與模型輸出
+data/
+datasets/
+checkpoints/
+runs/
+*.pt
+*.pth
+*.ckpt
+
+# 私密設定
+.env
