@@ -18,3 +18,11 @@ runs/
 
 # 私密設定
 .env
+
+# 前處理產生的資料
+all_song_sequences.json
+tok2idx.json
+# Baseline generated artifacts and supplied dataset
+POP909/
+*.log
+HW2_scripts/MusDr/
