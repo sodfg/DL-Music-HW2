@@ -1,17 +1,34 @@
 # HW2 first baseline
 
-先完成 Basic A/B。這是可執行的第一版，不是已訓練好的模型或完成的作業成果。
+本專案包含基本任務 A/B、指標評估與 Optional 實驗工具。已有模型與實驗成果保存在
+`runs/`，程式資料夾本身不包含模型；作業仍需完成聽感選擇、WAV 與報告整理。
 以下指令皆從 `Hw2-DL-in-music` 根目錄執行。助教的 `HW2_scripts` 保持原樣。
 
-## 程式與資料
+## 資料夾導覽
 
-- `music.py`：MIDI ↔ tokens，採用 `beat_midi.txt` 的拍點切小節。
-- `prepare.py`：處理全部 896 首，嚴格檢查字典與輸入，輸出 JSON 和 roundtrip MIDI。
-- `model.py`：隨機初始化、具有 causal attention 的 decoder-only Transformer。
-- `train.py`：訓練、驗證、存檔及續訓。
-- `generate.py`：固定小節數生成、三種設定比較、8+24 小節續寫。
-- `evaluate.py`：呼叫助教提供的 H1/H4/GS 計算程式。
-- `render_audio.py`：FluidSynth 合成 WAV。
+```text
+baseline/
+  music.py                 MIDI 與 tokens 轉換
+  prepare.py               前處理全部訓練曲
+  model.py                 Transformer 定義
+  train.py                 訓練與模型存檔
+  generate.py              單次生成與提示續寫
+  audio/                   統一音色的 WAV 合成
+  evaluation/              H4/GS、SI 與評估總表
+  experiments/             批次生成、SI 研究、模型深度比較
+  tests/                   自動化測試
+  docs/                    Optional 流程與深度實驗說明
+  requirements*.txt        核心與 SI 套件清單
+```
+
+核心五個檔案維持原路徑；輔助工具已搬入子資料夾，以下指令已更新。
+舊指令例如 `baseline/evaluate.py` 改為 `baseline/evaluation/evaluate.py`。
+支援直接執行檔案；例如 `python3 baseline/evaluation/summarize_metrics.py`。
+所有指令仍從作業根目錄執行，不要 cd 進子資料夾後直接套用資料相對路徑。
+
+- [Optional 擴充實驗流程](docs/OPTIONAL_WORKFLOW.md)
+- [模型深度比較](docs/DEPTH_EXPERIMENT.md)
+- [資料夾整理與 smoke 保存規則](docs/PROJECT_LAYOUT.md)
 
 表示法沿用助教提供的 Bar/Pos/Pitch/Vel/Dur 概念，但加上 `Beats_N`：
 每小節標註拍點數。它不是完整的 MIDI 拍號，不推定分母。採樣生成預設每小節 4 拍。
@@ -40,8 +57,8 @@ python baseline/prepare.py --roundtrip-song 149
 小模型只用來確認流程，不會產生有品質的音樂：
 
 ```bash
-python baseline/train.py --output runs/smoke --device cpu --steps 2 --context 32 --width 32 --layers 1 --heads 4 --batch-size 2 --eval-every 2 --eval-batches 1
-python baseline/generate.py --checkpoint runs/smoke/best.pt --output runs/smoke/generated --device cpu --count 1 --bars 2 --max-events-per-bar 4
+python baseline/train.py --output runs/_smoke/quickcheck --device cpu --steps 2 --context 32 --width 32 --layers 1 --heads 4 --batch-size 2 --eval-every 2 --eval-batches 1
+python baseline/generate.py --checkpoint runs/_smoke/quickcheck/best.pt --output runs/_smoke/quickcheck/generated --device cpu --count 1 --bars 2 --max-events-per-bar 4
 ```
 
 ## EDA Union
@@ -49,31 +66,30 @@ python baseline/generate.py --checkpoint runs/smoke/best.pt --output runs/smoke/
 先在本機傳送專案（不複製本機 .venv、Git 和生成結果）：
 
 ```bash
-rsync -av --exclude='.venv/' --exclude='.venv-si/' --exclude='.git/' --exclude='runs/' --exclude='data/' --exclude='.tools/' ./ eda_union_sodfg:~/hw2_music/
+rsync -av --exclude='.venv/' --exclude='.venv-si/' --exclude='.git/' --exclude='runs/' --exclude='data/' --exclude='.tools/' ./ eda_union_sodfg:~/DL_music_hw2/
 ssh eda_union_sodfg
-cd ~/hw2_music
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cu124
-python -m pip install -r baseline/requirements.txt
-python -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0))"
-python baseline/prepare.py
+cd ~/DL_music_hw2
+# EDA Union 使用既有帳號共用套件，不另建 venv、不降版 PyTorch：
+python3 -c "import torch; print(torch.__version__); print(torch.cuda.is_available())"
+python3 -c "import pretty_midi, mido, numpy, pandas, tqdm; print('dependencies OK')"
+# 只在缺少模組時安裝該模組，例如：
+# python3 -m pip install --user pretty_midi
+python3 baseline/prepare.py
 nvidia-smi
 ```
 
 檢查哪張卡空閒，依學校的共享 GPU 使用規則選擇。先測試 20 步：
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python baseline/train.py --steps 20 --eval-every 20 --eval-batches 2 --output runs/gpu_smoke
+CUDA_VISIBLE_DEVICES=0 python3 baseline/train.py --steps 20 --eval-every 20 --eval-batches 2 --output runs/_smoke/gpu_smoke
 ```
 
 正式訓練建議放在 tmux，避免網路中斷使程序停止：
 
 ```bash
 tmux new -s hw2
-source .venv/bin/activate
-CUDA_VISIBLE_DEVICES=0 python baseline/train.py --steps 20000 --validation-fraction 0 --output runs/baseline > runs_train.log 2>&1
+cd ~/DL_music_hw2
+CUDA_VISIBLE_DEVICES=0 python3 baseline/train.py --steps 20000 --validation-fraction 0 --output runs/baseline > runs_train.log 2>&1
 ```
 
 按 Ctrl+B，放開後按 D，離開 tmux 而不停止訓練。重新登入後：
@@ -94,7 +110,7 @@ tail -f runs_train.log
 續訓，模型參數、字典與 seed 必須與原 run 相同：
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python baseline/train.py --steps 20000 --validation-fraction 0 --output runs/baseline --resume runs/baseline/last.pt
+CUDA_VISIBLE_DEVICES=0 python3 baseline/train.py --steps 20000 --validation-fraction 0 --output runs/baseline --resume runs/baseline/last.pt
 ```
 
 同一總步數下可恢復 RNG/optimizer；增加總步數會改變 cosine learning rate 排程。
@@ -135,10 +151,10 @@ python baseline/generate.py --checkpoint runs/baseline/best.pt --prompt POP909/p
 
 ```bash
 git clone https://github.com/slSeanWU/MusDr.git HW2_scripts/MusDr
-python baseline/evaluate.py --data data/baseline --output runs/metrics_real.csv
-python baseline/evaluate.py --data runs/a_t08 --output runs/metrics_t08.csv
-python baseline/evaluate.py --data runs/a_t10 --output runs/metrics_t10.csv
-python baseline/evaluate.py --data runs/a_t12 --output runs/metrics_t12.csv
+python baseline/evaluation/evaluate.py --data data/baseline --output runs/metrics_real.csv
+python baseline/evaluation/evaluate.py --data runs/a_t08 --output runs/metrics_t08.csv
+python baseline/evaluation/evaluate.py --data runs/a_t10 --output runs/metrics_t10.csv
+python baseline/evaluation/evaluate.py --data runs/a_t12 --output runs/metrics_t12.csv
 ```
 
 MusDr 可能需要額外依賴，請依其 README 安裝。這部分尚未在本機驗證。
@@ -153,7 +169,7 @@ SI 是選做，目前未實作。
 WAV 需要 FluidSynth 執行檔與有授權的 `.sf2` SoundFont：
 
 ```bash
-python baseline/render_audio.py --input runs/a_t08 --output runs/a_t08/wav --soundfont /path/to/piano.sf2
+python baseline/audio/render_audio.py --input runs/a_t08 --output runs/a_t08/wav --soundfont /path/to/piano.sf2
 ```
 
 把最佳 Basic A 的 20 首與全部 Basic B 的 9 首都轉為 WAV。FluidSynth/SoundFont
@@ -175,7 +191,7 @@ Smoke 結果來自只訓練幾步的模型，僅驗證程式，不代表生成�
 也可以一次執行三組 Basic A 與全部九首 Basic B（預設共 69 首）：
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python baseline/run_experiments.py --checkpoint runs/baseline/best.pt
+CUDA_VISIBLE_DEVICES=0 python baseline/experiments/run_experiments.py --checkpoint runs/baseline/best.pt
 ```
 
 本機測試用 `--device cpu --count 1 --max-events-per-bar 4`，正式成果不應使用 smoke checkpoint。
@@ -183,7 +199,7 @@ CUDA_VISIBLE_DEVICES=0 python baseline/run_experiments.py --checkpoint runs/base
 程式單元檢查（因果遮罩、長小節還原與續寫接點）：
 
 ```bash
-python -m unittest discover -s baseline -p 'test_*.py'
+python -m unittest discover -s baseline/tests -p 'test_*.py'
 ```
 
 PyTorch API 參考：https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html
@@ -193,7 +209,7 @@ PyTorch API 參考：https://docs.pytorch.org/docs/stable/generated/torch.nn.fun
 完成 real/t08/t10/t12 的逐首評估後，在作業根目錄執行（僅需 Python 標準函式庫）：
 
 ```bash
-python3 baseline/summarize_metrics.py
+python3 baseline/evaluation/summarize_metrics.py
 ```
 
 讀取 `runs/metrics/{real,t08,t10,t12}.csv`，保留原檔，新增
@@ -207,13 +223,13 @@ H4/GS 分別比較，不合成單一分數；沿用上述 64 格正規化評估�
 其他實驗可自行指定檔案（須包含 reference）：
 
 ```bash
-python3 baseline/summarize_metrics.py --input-dir runs/metrics --files real.csv t08.csv t10.csv t12.csv --reference real --output runs/metrics/summary.csv
+python3 baseline/evaluation/summarize_metrics.py --input-dir runs/metrics --files real.csv t08.csv t10.csv t12.csv --reference real --output runs/metrics/summary.csv
 ```
 
 獨立測試，不必安裝 PyTorch：
 
 ```bash
-python3 -m unittest discover -s baseline -p 'test_summarize_metrics.py'
+python3 -m unittest discover -s baseline/tests -p 'test_summarize_metrics.py'
 ```
 
 本次功能可獨立提交 `summarize_metrics.py`、`test_summarize_metrics.py` 及 README。
@@ -226,7 +242,7 @@ python3 -m unittest discover -s baseline -p 'test_summarize_metrics.py'
 
 ## Optional 擴充實驗流程
 
-進度、下一步與統一 WAV 合成設定見 [OPTIONAL_WORKFLOW.md](OPTIONAL_WORKFLOW.md)。
+進度、下一步與統一 WAV 合成設定見 [OPTIONAL_WORKFLOW.md](docs/OPTIONAL_WORKFLOW.md)。
 新版 `render_audio.py` 支援 piano 統一音色、遞迴子目錄、少量試轉、有效 WAV 檢查、
 重跑核對與合成 manifest。預設關閉效果，既有 MIDI 不變。
 SI 已新增獨立的 32 秒小量試算流程（`evaluate_si.py`），結果位於
@@ -236,3 +252,13 @@ SI 已新增獨立的 32 秒小量試算流程（`evaluate_si.py`），結果位
 48 秒批次 SI 計畫與執行入口為 `run_si_study.py`：固定使用 60 首生成與 20 首
 抽樣真實參考。預設只建立／核對計畫，需明確加 `--execute` 才會合成與計算。
 詳見 Optional 流程的「48 秒批次 SI 比較」；不覆蓋 H4/GS 或 32 秒 pilot 報告。
+
+## 模型深度比較
+
+新增 [DEPTH_EXPERIMENT.md](docs/DEPTH_EXPERIMENT.md) 與 `run_depth_experiment.py`：
+保留六層 baseline，只改三層，固定資料、訓練與採樣設定。預設只檢視計畫；
+明確使用 `--stage all` 才會訓練與生成。這輪先比較 H4/GS，SI 與成本 benchmark 另行處理。
+
+套件相容性：核心 requirements 現在允許 PyTorch 2.5–2.6，避免把 EDA Union
+既有的 2.6.0+cu124 降成 2.5.1。學校主機仍優先使用現有共用套件，缺什麼才補什麼；
+實驗實際版本寫入 execution.json。這是相容範圍，不代表已在所有版本完整測試。

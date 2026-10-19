@@ -13,7 +13,7 @@ p.add_argument('--count',type=int,default=20)
 p.add_argument('--max-events-per-bar',type=int,default=128)
 p.add_argument('--seed',type=int,default=123)
 a=p.parse_args()
-script=Path(__file__).resolve().with_name('generate.py')
+script=Path(__file__).resolve().parents[1]/'generate.py'
 prompts=Path(a.prompts)
 for name in ('001','002','003'):
     for f in (prompts/name/f'{name}.mid',prompts/name/'beat_midi.txt'):

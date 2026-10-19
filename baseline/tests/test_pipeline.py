@@ -1,12 +1,12 @@
-"""Run with: python -m unittest discover -s baseline -p 'test_*.py'."""
+"""Run with: python -m unittest discover -s baseline/tests -p 'test_*.py'."""
 import tempfile
 from pathlib import Path
 import unittest
 import torch
 import pretty_midi
 import mido
-from model import Config, MusicTransformer
-from music import decode, encode, preserve_prompt
+from baseline.model import Config, MusicTransformer
+from baseline.music import decode, encode, preserve_prompt
 
 class PipelineTests(unittest.TestCase):
     def test_attention_cannot_see_future(self):

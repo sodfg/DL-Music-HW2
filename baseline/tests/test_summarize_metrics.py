@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 import tempfile
 import unittest
-from summarize_metrics import METRICS, summarize_file, build_summary
+from baseline.evaluation.summarize_metrics import METRICS, summarize_file, build_summary
 
 
 class SummaryTests(unittest.TestCase):

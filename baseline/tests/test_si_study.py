@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from run_si_study import GROUPS,write_summary
+from baseline.experiments.run_si_study import GROUPS,write_summary
 
 
 class SIStudyTests(unittest.TestCase):

@@ -6,7 +6,7 @@ import wave
 
 import mido
 
-from render_audio import collect_files, inspect_wav, piano_copy, sha256
+from baseline.audio.render_audio import collect_files, inspect_wav, piano_copy, sha256
 
 
 class RenderTests(unittest.TestCase):

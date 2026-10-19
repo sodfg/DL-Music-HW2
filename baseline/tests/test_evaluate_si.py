@@ -4,7 +4,7 @@ import tempfile
 import unittest
 
 import numpy as np
-from evaluate_si import si_values, verified_audio_record, file_hash
+from baseline.evaluation.evaluate_si import si_values, verified_audio_record, file_hash
 
 
 class SITests(unittest.TestCase):

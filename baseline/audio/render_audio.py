@@ -129,7 +129,7 @@ def main():
             raise ValueError(f'SoundFont not found: {args.soundfont}')
         binary = shutil.which(args.fluidsynth)
         if not binary:
-            raise ValueError('FluidSynth executable not found; see baseline/OPTIONAL_WORKFLOW.md')
+            raise ValueError('FluidSynth executable not found; see baseline/docs/OPTIONAL_WORKFLOW.md')
         if args.limit:
             files = files[:args.limit]
         version_result = subprocess.run([binary, '--version'], check=True, text=True, capture_output=True, timeout=15)

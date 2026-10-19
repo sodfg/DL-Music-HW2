@@ -16,8 +16,12 @@ import subprocess
 import sys
 
 import mido
-from render_audio import sha256
-from evaluate_si import save_json
+
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from baseline.audio.render_audio import sha256
+from baseline.evaluation.evaluate_si import save_json
 
 GROUPS=('real','t08','t10','t12')
 
@@ -162,7 +166,7 @@ def main():
         return
     if a.soundfont is None or not a.soundfont.is_file():
         p.error('--execute requires a valid --soundfont')
-    here=Path(__file__).resolve().parent
+    here=Path(__file__).resolve().parents[1]
     # Each worker launches a separate CPU process; groups have independent output paths.
     def run_group(group):
         inputs=root/'inputs'/group
@@ -177,10 +181,10 @@ def main():
             raise ValueError(f'Unexpected files in {inputs}')
         log=root/(group+'.log')
         with log.open('a',buffering=1) as stream:
-            subprocess.run([a.renderer_python,str(here/'render_audio.py'),'--input',str(inputs),
+            subprocess.run([a.renderer_python,str(here/'audio/render_audio.py'),'--input',str(inputs),
                             '--output',str(root/'audio'/group),'--soundfont',str(a.soundfont),
                             '--fluidsynth',a.fluidsynth,'--gain',str(a.gain)],stdout=stream,stderr=subprocess.STDOUT,check=True)
-            subprocess.run([a.si_python,str(here/'evaluate_si.py'),'--audio-root',str(root/'audio'),
+            subprocess.run([a.si_python,str(here/'evaluation/evaluate_si.py'),'--audio-root',str(root/'audio'),
                             '--groups',group,'--limit-per-group','20','--duration',str(a.duration),
                             '--scope','batch','--output',str(root/'groups'/group)],
                            stdout=stream,stderr=subprocess.STDOUT,check=True)

@@ -8,7 +8,7 @@
 | 1 | H1/H4/GS 總表與易讀 Markdown | 完成 |
 | 2 | 統一鋼琴音色、批次 WAV、品質檢查與合成記錄 | 已實作，本機少量試轉 |
 | 3 | SI 小量試算與匹配長度的批次比較 | 完成 32 秒 pilot 與 80 個 48 秒片段 |
-| 4 | 模型深度比較，固定目前表示法 | 尚未開始 |
+| 4 | 模型深度比較，固定目前表示法 | 完成三層訓練、20 首生成與 H4/GS；SI 待接續 |
 | 5 | MIDI-like 表示法比較，固定模型架構 | 尚未開始 |
 
 Git 分支不是每個階段的必要條件。每個可獨立執行且通過驗證的功能做一次 commit；
@@ -59,7 +59,7 @@ manifest 會記錄 SHA-256，確認它真的是同一個音色檔，不只檔名
 以下指令從作業根目錄執行；本機使用 `.venv/bin/python`，已具備 mido。
 
 ```bash
-.venv/bin/python baseline/render_audio.py \
+.venv/bin/python baseline/audio/render_audio.py \
   --input runs/experiments/basic_a/t08/sample_000.mid \
   --output runs/audio_trial/t08 \
   --soundfont /home/sodfg/.vscode/extensions/vaclis.midi-realplayer-0.2.5/media/GeneralUser-GS.sf2 \
@@ -76,7 +76,7 @@ manifest 會記錄 SHA-256，確認它真的是同一個音色檔，不只檔名
 合成整個資料夾，保留子目錄對應關係，例如 t08/sample_000.mid → t08/sample_000.wav：
 
 ```bash
-.venv/bin/python baseline/render_audio.py \
+.venv/bin/python baseline/audio/render_audio.py \
   --input runs/experiments/basic_a \
   --output runs/audio/basic_a \
   --recursive \
@@ -108,7 +108,7 @@ manifest 會記錄 SHA-256，確認它真的是同一個音色檔，不只檔名
 ### 測試與來源
 
 ```bash
-.venv/bin/python -m unittest discover -s baseline -p 'test_render_audio.py'
+.venv/bin/python -m unittest discover -s baseline/tests -p 'test_render_audio.py'
 ```
 
 FluidSynth CLI：<https://www.fluidsynth.org/wiki/UserManual/>
@@ -161,7 +161,7 @@ python3 -m venv .venv-si
 output 改為 `runs/audio_trial/real`，其餘音色、gain、效果全部相同。
 
 ```bash
-.venv-si/bin/python baseline/evaluate_si.py
+.venv-si/bin/python baseline/evaluation/evaluate_si.py
 ```
 
 輸出：
@@ -183,7 +183,7 @@ output 改為 `runs/audio_trial/real`，其餘音色、gain、效果全部相同
 測試索引、時間尺度與檔案驗證：
 
 ```bash
-.venv-si/bin/python -m unittest discover -s baseline -p 'test_evaluate_si.py'
+.venv-si/bin/python -m unittest discover -s baseline/tests -p 'test_evaluate_si.py'
 ```
 
 來源：<https://github.com/slSeanWU/MusDr> 及其 `mueller_audio_tools/` 內註明的 FMP 教材。
@@ -217,7 +217,7 @@ output 改為 `runs/audio_trial/real`，其餘音色、gain、效果全部相同
 ### 建立／檢視計畫
 
 ```bash
-.venv/bin/python baseline/run_si_study.py
+.venv/bin/python baseline/experiments/run_si_study.py
 ```
 
 不加 `--execute` 只會建立或核對 `study_plan.json`，不會開始合成與 SI。
@@ -227,7 +227,7 @@ output 改為 `runs/audio_trial/real`，其餘音色、gain、效果全部相同
 ### 執行（本機，不需學校 GPU）
 
 ```bash
-.venv/bin/python baseline/run_si_study.py \
+.venv/bin/python baseline/experiments/run_si_study.py \
   --execute --gain 0.025 \
   --renderer-python .venv/bin/python \
   --si-python .venv-si/bin/python \

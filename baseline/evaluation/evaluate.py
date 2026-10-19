@@ -9,7 +9,11 @@ import json
 from pathlib import Path
 import subprocess
 import sys
-from music import dump, PPB
+
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from baseline.music import dump, PPB
 
 
 def normalize(songs):
@@ -50,7 +54,7 @@ def main():
     cache=output.parent/(output.stem+'_inputs')
     dump(cache/'tok2idx.json',vocab)
     dump(cache/'sequences.json',normalized)
-    script=Path(__file__).resolve().parents[1]/'HW2_scripts/eval_basic.py'
+    script=Path(__file__).resolve().parents[2]/'HW2_scripts/eval_basic.py'
     subprocess.run([sys.executable,str(script),'--tok2idx_path',str(cache/'tok2idx.json'),
                     '--sequences_path',str(cache/'sequences.json'),'--output_csv',str(output)],check=True)
 

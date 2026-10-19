@@ -221,7 +221,7 @@ def main():
         (args.output/'summary.md').write_text('\n'.join(lines))
         print(f'Finished: {args.output}/summary.md',flush=True)
     except (ImportError,ValueError,OSError,KeyError,wave.Error) as error:
-        parser.exit(1,f'Error: {error}\nSee baseline/OPTIONAL_WORKFLOW.md for SI setup.\n')
+        parser.exit(1,f'Error: {error}\nSee baseline/docs/OPTIONAL_WORKFLOW.md for SI setup.\n')
 
 
 if __name__=='__main__':
