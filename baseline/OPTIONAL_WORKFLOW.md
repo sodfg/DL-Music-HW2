@@ -7,7 +7,7 @@
 |---|---|---|
 | 1 | H1/H4/GS 總表與易讀 Markdown | 完成 |
 | 2 | 統一鋼琴音色、批次 WAV、品質檢查與合成記錄 | 已實作，本機少量試轉 |
-| 3 | SI 小量試算與快取驗證 | 完成四個 32 秒片段；正式批次尚未開始 |
+| 3 | SI 小量試算與匹配長度的批次比較 | 完成 32 秒 pilot 與 80 個 48 秒片段 |
 | 4 | 模型深度比較，固定目前表示法 | 尚未開始 |
 | 5 | MIDI-like 表示法比較，固定模型架構 | 尚未開始 |
 
@@ -197,3 +197,72 @@ output 改為 `runs/audio_trial/real`，其餘音色、gain、效果全部相同
 本次 long SI 全為 0，32 秒片段對長段落重複的機會有限；這不證明整首歌沒有長期結構。
 完整結果在 `runs/metrics/si_trial/summary.md`，套件快照在同目錄的 `environment.txt`。
 該試算資料與原先全曲 H4/GS 的樣本數不同，因此維持獨立報告。
+
+## 第 3 步延伸：48 秒批次 SI 比較
+
+由於 60 首生成曲最短約 61.44 秒，這次採用每首開頭固定 **48 秒**，
+增加長片段重複的觀察範圍，避免把 32 秒 pilot 的結果誤當成全組結果。
+
+研究計畫：
+
+- t08/t10/t12 各使用既有全部 20 首，不丟棄較差的生成樣本，共 60 首。
+- 真實曲從 896 首中篩選長度至少 48 秒者，共 895 首，再以 seed 42 無放回均勻抽 20 首。
+- 音色統一 GeneralUser GS，piano，44,100 Hz PCM16，關閉效果；本批次 gain **0.025**。
+- 批次試轉時發現 gain 0.1 對部分密集曲子有削波，因此停止該次嘗試。
+  舊的 `runs/metrics/si48/` 僅是未完成中間資料，不是正式結果。
+  較低 gain 的新批次獨立存在 `runs/metrics/si48_g0025/`，不混用前批音訊。
+- short：3–8 秒；mid：8–15 秒；long：15–48 秒。不同速度的 48 秒包含不同小節數。
+- H4/GS 全曲參考仍是 896 首，與這次 SI 的 20 首參考不同，因此用獨立 SI 表格。
+
+### 建立／檢視計畫
+
+```bash
+.venv/bin/python baseline/run_si_study.py
+```
+
+不加 `--execute` 只會建立或核對 `study_plan.json`，不會開始合成與 SI。
+計畫保存所有來源 MIDI 的絕對路徑與 SHA-256，重跑不會重新抽選曲子。
+換機器或更改來源時，應使用新的 output 重新建立計畫，不直接複用舊機器的絕對路徑。
+
+### 執行（本機，不需學校 GPU）
+
+```bash
+.venv/bin/python baseline/run_si_study.py \
+  --execute --gain 0.025 \
+  --renderer-python .venv/bin/python \
+  --si-python .venv-si/bin/python \
+  --soundfont /home/sodfg/.vscode/extensions/vaclis.midi-realplayer-0.2.5/media/GeneralUser-GS.sf2 \
+  --fluidsynth .tools/fluidsynth/bin/fluidsynth \
+  --workers 4
+```
+
+四個 worker 各處理一組，使用 CPU subprocess，不是多個 AI agent，也不使用 GPU。
+若電腦資源有限，改 `--workers 1` 或 2。先前 48 秒單首基準約 8.6 秒，但
+平行計算與合成真實長曲的成本不同，整批通常需要數分鐘以上。
+
+每組結果與進度獨立寫入同目錄的 `real.log`、`t08.log`、`t10.log`、`t12.log`。
+程式只有在四組都完成、每組恰有計畫中的 20 首且算法協定一致時，才產生合併總表。
+遇到削波／缺檔／設定不一致會停止，不會以部分成功結果當成完整 80 首。
+中斷後重跑同一指令可核對已完成 WAV 並使用 SI 矩陣快取。
+
+### 結果與保存
+
+```text
+runs/metrics/si48_g0025/
+  study_plan.json       固定選曲、長度、來源與雜湊
+  inputs/               選中 MIDI 的工作副本
+  audio/                同設定 WAV 和 render manifests
+  groups/               各組 SI 矩陣、協定與逐首結果
+  per_piece.csv         全部 80 個片段的數值
+  summary.csv           各組平均、樣本標準差、與真實參考的差距
+  summary.md            易讀報告
+```
+
+SI 本身計算的是從 WAV 取出的 48 秒，WAV 檔可能保留整首演奏與 release tail。
+研究計畫與所有 `runs/` 成果另外備份；不加入 Git。程式與說明可獨立提交。
+這是有明確範圍的抽樣參考比較，不代表所有 896 首真實曲子的 SI，也不是全曲結構分析。
+
+本次 48 秒批次已完整完成，四組各 20 首，共 80 個片段。
+所有 WAV 來源與雜湊核對通過，無削波；合併表中的每個 SI 值皆有限。
+在此抽樣參考下，t10 的三個 SI 平均值差距皆最小；這不是統計顯著性或整體音樂品質結論。
+音色授權文字另保存在結果的 `audio/GeneralUser-GS-LICENSE.txt`。

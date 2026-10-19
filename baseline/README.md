@@ -49,7 +49,7 @@ python baseline/generate.py --checkpoint runs/smoke/best.pt --output runs/smoke/
 先在本機傳送專案（不複製本機 .venv、Git 和生成結果）：
 
 ```bash
-rsync -av --exclude='.venv/' --exclude='.git/' --exclude='runs/' --exclude='data/' --exclude='.tools/' ./ eda_union_sodfg:~/hw2_music/
+rsync -av --exclude='.venv/' --exclude='.venv-si/' --exclude='.git/' --exclude='runs/' --exclude='data/' --exclude='.tools/' ./ eda_union_sodfg:~/hw2_music/
 ssh eda_union_sodfg
 cd ~/hw2_music
 python3 -m venv .venv
@@ -232,3 +232,7 @@ python3 -m unittest discover -s baseline -p 'test_summarize_metrics.py'
 SI 已新增獨立的 32 秒小量試算流程（`evaluate_si.py`），結果位於
 `runs/metrics/si_trial/summary.md`；尚未完成全部曲子的 SI。
 不需要重新訓練模型來合成 WAV 或計算 SI。
+
+48 秒批次 SI 計畫與執行入口為 `run_si_study.py`：固定使用 60 首生成與 20 首
+抽樣真實參考。預設只建立／核對計畫，需明確加 `--execute` 才會合成與計算。
+詳見 Optional 流程的「48 秒批次 SI 比較」；不覆蓋 H4/GS 或 32 秒 pilot 報告。

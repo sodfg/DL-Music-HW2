@@ -93,6 +93,7 @@ def load_musdr(root):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--scope', choices=['pilot','batch'], default='pilot')
     parser.add_argument('--audio-root',type=Path,default=Path('runs/audio_trial'))
     parser.add_argument('--groups',nargs='+',default=['real','t08','t10','t12'])
     parser.add_argument('--limit-per-group',type=int,default=1)
@@ -136,7 +137,8 @@ def main():
                 jobs.append((group,path,record))
         versions={name:importlib.metadata.version(name) for name in ('numpy','scipy','librosa','numba')}
         protocol={'method':'MusDr Python SSM and fitness scape plot',
-                  'scope':'pilot; first sorted WAVs in each group, not full-dataset results',
+                  'scope':('pilot; first sorted WAVs in each group, not full-dataset results' if args.scope=='pilot'
+                           else 'batch; only the selected audio files, not the entire real dataset'),
                   'start_seconds':args.start,'duration_seconds':args.duration,'bounds_seconds':args.bounds,
                   'audio_load_rate':22050,'chroma_hop':2205,'chroma_fft':4410,'chroma_tuning':0,'wrapper_sha256':file_hash(__file__),
                   'smooth_length':21,'downsample':5,'ssm_smooth_length':16,
@@ -145,8 +147,11 @@ def main():
                   'musdr_source_sha256':source_hashes,'versions':versions,'render_settings':render_settings}
         args.output.mkdir(parents=True,exist_ok=True)
         old_protocol=args.output/'protocol.json'
-        if old_protocol.is_file() and json.loads(old_protocol.read_text())!=protocol:
-            raise ValueError('Protocol differs from previous run; choose a new --output directory')
+        if old_protocol.is_file():
+            previous=json.loads(old_protocol.read_text())
+            comparable=lambda item:{k:v for k,v in item.items() if k!='wrapper_sha256'}
+            if comparable(previous)!=comparable(protocol):
+                raise ValueError('Protocol differs from previous run; choose a new --output directory')
         save_json(old_protocol,protocol)
         records=[]
         for index,(group,path,render_record) in enumerate(jobs,1):
@@ -192,7 +197,8 @@ def main():
                 writer.writeheader()
                 writer.writerows(records)
             print(f'  {values}; original compute {details["compute_seconds"]:.2f}s; cached={cached}',flush=True)
-        lines=['# SI 小量試算（非正式全組評分）','',
+        title='# SI 小量試算（非正式全組評分）' if args.scope=='pilot' else '# SI 批次結果（僅涵蓋本次所選樣本）'
+        lines=[title,'',
                f'每組取檔名排序前 {args.limit_per_group} 首，分析第 {args.start:g} 秒起的 {args.duration:g} 秒。',
                f'SI 時間尺度：short {args.bounds[0]:g}–{args.bounds[1]:g} 秒；'
                f'mid {args.bounds[1]:g}–{args.bounds[2]:g} 秒；long {args.bounds[2]:g}–{args.duration:g} 秒。','',
@@ -203,7 +209,9 @@ def main():
             means=[statistics.mean(r['SI_'+name] for r in subset) for name in ('short','mid','long')]
             lines.append(f'| {group} | {len(subset)} | '+ ' | '.join(f'{x:.4f}' for x in means)
                          +f' | {sum(r["compute_seconds"] for r in subset):.2f} |')
-        lines+=['','- 這是流程與時間成本測試，不能代表 20 首生成曲或 896 首真實曲的平均。',
+        scope_note=('- 這是流程與時間成本測試，不能代表 20 首生成曲或 896 首真實曲的平均。'
+                    if args.scope=='pilot' else '- 僅代表這份輸入資料，真實參考的抽樣方式見研究計畫；不能當作全部 896 首的平均。')
+        lines+=['',scope_note,
                 '- 不合併到原本 H4/GS 的 summary.csv，避免樣本數與片段範圍不同卻被當成同一實驗。',
                 '- 統一音色、音量設定與時間長度；時間尺度單位是秒，並非小節。',
                 '- SI 是指定範圍內的最大 fitness；不是原創性／抄襲檢測，也不是越高越好。',
