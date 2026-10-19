@@ -112,3 +112,61 @@ runs/depth_3_vs_6/
 comparison.md 包含平均、標準差及與真實資料的差距；此輪三層 H4 更接近參考，
 GS 差異很小，不宣稱單 seed 的結果足以證明三層普遍優於六層。
 套件仍是既有 PyTorch 2.6.0+cu124，未在學校主機安裝或更換套件。
+
+## 補齊深度比較的 SI（本機 CPU）
+
+不重新訓練或生成 MIDI。沿用 `runs/metrics/si48_g0025` 中已驗證的真實參考與六層
+WAV，為三層的 20 首 MIDI 轉鋼琴 WAV；三組均使用目前同一支 SI 程式重新計算。
+每首只分析開頭 48 秒，音色、FluidSynth 版本與 gain=0.025 必須完全一致。
+原有真實抽樣固定 seed=42，從符合長度條件的 895 首中取 20 首。
+
+先檢查來源並產生固定計畫：
+
+```bash
+.venv/bin/python baseline/experiments/run_depth_si.py
+```
+
+執行（將音色與 FluidSynth 路徑換成自己的位置）：
+
+```bash
+.venv/bin/python baseline/experiments/run_depth_si.py \
+  --execute \
+  --si-python .venv-si/bin/python \
+  --fluidsynth .tools/fluidsynth/bin/fluidsynth \
+  --soundfont /path/to/GeneralUser-GS.sf2
+```
+
+結果在 `runs/depth_3_vs_6/si48/comparison.md`，包含三組平均、樣本標準差及與真實組
+平均的絕對差距；逐首值在 `per_piece.csv`，每組完整協定、快取與紀錄也會保存。
+同一輸入重跑會保留相同 WAV 並使用 SI 快取；來源或設定變更需另開輸出資料夾。
+
+真實與六層音訊使用連到原 SI 研究目錄的符號連結，避免複製大型 WAV。
+備份時請保留兩份研究資料夾，或讓備份工具展開符號連結。
+H4/GS 使用全曲與全部 896 首參考，SI 使用 48 秒與 20 首參考，因此維持獨立表格。
+
+本輪 SI 已完成（各 20 首，平均 ± 樣本標準差）：
+
+| 組別 | SI short | SI mid | SI long |
+|---|---:|---:|---:|
+| 真實參考 | 0.3299 ± 0.0536 | 0.2733 ± 0.1178 | 0.1625 ± 0.1640 |
+| 六層 | 0.2934 ± 0.0305 | 0.2127 ± 0.0552 | 0.0901 ± 0.0855 |
+| 三層 | 0.2730 ± 0.0299 | 0.1850 ± 0.0570 | 0.0575 ± 0.0727 |
+
+六層在三項 SI 平均都較接近這組真實參考；先前 H4 則是三層較接近。
+這表示不同指標呈現不同面向，不能據此宣布單一模型整體勝出。
+上述平均並非全部真實資料集的 SI 平均，也未做多訓練 seed 的顯著性檢定。
+
+## 本機與 EDA Union 的同步
+
+GitHub 的 push 不會自動修改 EDA Union 上的檔案。目前學校專案是一般資料夾，
+沒有 `.git`；使用本機的 `rsync` 更新程式，不要在遠端直接執行 `git pull`。
+先 commit，再預覽與同步：
+
+```bash
+rsync -av --dry-run --exclude='__pycache__/' baseline/ eda_union_sodfg:~/DL_music_hw2/baseline/
+rsync -av --exclude='__pycache__/' baseline/ eda_union_sodfg:~/DL_music_hw2/baseline/
+```
+
+此指令僅同步 baseline 程式與文件，不同步 runs、模型或資料，也不刪除遠端檔案。
+遠端舊版平面腳本會保留，後續命令請使用新版子資料夾路徑。這次 SI 在本機完成，
+不必先同步才能計算；下次在 EDA Union 跑新實驗之前應完成同步。
