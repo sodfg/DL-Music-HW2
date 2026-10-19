@@ -32,3 +32,6 @@ HW2_scripts/MusDr/
 
 # Isolated local optional SI dependencies
 .venv-si/
+
+# 報告輸出
+/output/

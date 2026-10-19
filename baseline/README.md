@@ -269,3 +269,13 @@ SI 比較入口為 `baseline/experiments/run_depth_si.py`：沿用相同的 20 �
 套件相容性：核心 requirements 現在允許 PyTorch 2.5–2.6，避免把 EDA Union
 既有的 2.6.0+cu124 降成 2.5.1。學校主機仍優先使用現有共用套件，缺什麼才補什麼；
 實驗實際版本寫入 execution.json。這是相容範圍，不代表已在所有版本完整測試。
+
+## Token 表示法比較
+
+新增獨立的 `representations/`，保留目前 Bar/Pos baseline，實作 beat-grid MIDI-like
+的 NoteOn/NoteOff/Vel/TimeShift/Tempo。896 首轉換已逐首檢查 MIDI 事件及評分 onset
+一致；核心訓練程式不變，另訓練一個六層模型，固定訓練 token 預算與生成設定。
+
+操作、限制與遠端命令見 [REPRESENTATION_EXPERIMENT.md](docs/REPRESENTATION_EXPERIMENT.md)。
+入口是 `baseline/experiments/run_representation_experiment.py`，預設僅檢視計畫。
+正式成果放在 `runs/representation_midi_like/`，不覆蓋原模型或 Task B。
