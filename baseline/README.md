@@ -1,5 +1,7 @@
 # HW2 first baseline
 
+快速開始請看[專案首頁](../README.md)。本頁保留完整的訓練、推論與評估操作細節。
+
 本專案包含基本任務 A/B、指標評估與 Optional 實驗工具。已有模型與實驗成果保存在
 `runs/`，程式資料夾本身不包含模型；作業仍需完成聽感選擇、WAV 與報告整理。
 以下指令皆從 `Hw2-DL-in-music` 根目錄執行。助教的 `HW2_scripts` 保持原樣。
@@ -257,7 +259,12 @@ SI 已新增獨立的 32 秒小量試算流程（`evaluate_si.py`），結果位
 
 新增 [DEPTH_EXPERIMENT.md](docs/DEPTH_EXPERIMENT.md) 與 `run_depth_experiment.py`：
 保留六層 baseline，只改三層，固定資料、訓練與採樣設定。預設只檢視計畫；
-明確使用 `--stage all` 才會訓練與生成。這輪先比較 H4/GS，SI 與成本 benchmark 另行處理。
+明確使用 `--stage all` 才會訓練與生成。H4/GS 比較已完成；成本 benchmark 另行處理。
+
+SI 比較入口為 `baseline/experiments/run_depth_si.py`：沿用相同的 20 首真實參考與
+六層音訊，補上三層音訊，三組均使用同一版本程式計算開頭 48 秒的 SI。
+預設只核對計畫，加 `--execute` 執行；不訓練模型或生成新的 MIDI。
+結果在 `runs/depth_3_vs_6/si48/comparison.md`，操作及 EDA 同步方式見上述文件。
 
 套件相容性：核心 requirements 現在允許 PyTorch 2.5–2.6，避免把 EDA Union
 既有的 2.6.0+cu124 降成 2.5.1。學校主機仍優先使用現有共用套件，缺什麼才補什麼；
