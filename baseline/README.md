@@ -49,7 +49,7 @@ python baseline/generate.py --checkpoint runs/smoke/best.pt --output runs/smoke/
 先在本機傳送專案（不複製本機 .venv、Git 和生成結果）：
 
 ```bash
-rsync -av --exclude='.venv/' --exclude='.git/' --exclude='runs/' --exclude='data/' ./ eda_union_sodfg:~/hw2_music/
+rsync -av --exclude='.venv/' --exclude='.git/' --exclude='runs/' --exclude='data/' --exclude='.tools/' ./ eda_union_sodfg:~/hw2_music/
 ssh eda_union_sodfg
 cd ~/hw2_music
 python3 -m venv .venv
@@ -223,3 +223,10 @@ python3 -m unittest discover -s baseline -p 'test_summarize_metrics.py'
 平均值與差距分表、標準差說明。日常閱讀建議開啟 summary.md，
 在 VS Code 按 `Ctrl+Shift+V` 開啟 Markdown 預覽；CSV 用於後續程式分析。
 若指定 `--output`，Markdown 報告會使用相同檔名、改為 `.md` 副檔名。
+
+## Optional 擴充實驗流程
+
+進度、下一步與統一 WAV 合成設定見 [OPTIONAL_WORKFLOW.md](OPTIONAL_WORKFLOW.md)。
+新版 `render_audio.py` 支援 piano 統一音色、遞迴子目錄、少量試轉、有效 WAV 檢查、
+重跑核對與合成 manifest。預設關閉效果，既有 MIDI 不變。
+SI 尚未開始；不需要重新訓練模型來合成 WAV。

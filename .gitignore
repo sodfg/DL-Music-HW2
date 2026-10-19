@@ -26,3 +26,6 @@ tok2idx.json
 POP909/
 *.log
 HW2_scripts/MusDr/
+
+# Local renderer runtime; do not commit binary dependencies
+.tools/
