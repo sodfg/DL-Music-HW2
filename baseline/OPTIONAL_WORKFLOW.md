@@ -7,7 +7,7 @@
 |---|---|---|
 | 1 | H1/H4/GS 總表與易讀 Markdown | 完成 |
 | 2 | 統一鋼琴音色、批次 WAV、品質檢查與合成記錄 | 已實作，本機少量試轉 |
-| 3 | 少量 SI → 確認時間尺度、片段長度與成本 → 批次整合 | 尚未開始 |
+| 3 | SI 小量試算與快取驗證 | 完成四個 32 秒片段；正式批次尚未開始 |
 | 4 | 模型深度比較，固定目前表示法 | 尚未開始 |
 | 5 | MIDI-like 表示法比較，固定模型架構 | 尚未開始 |
 
@@ -102,8 +102,8 @@ manifest 會記錄 SHA-256，確認它真的是同一個音色檔，不只檔名
 
 音訊與 manifest 都在 `runs/`，不加入 Git，另行備份。
 程式、測試、說明文件與 .gitignore 才是本次 commit 的內容。
-下一步 SI 的片段長度、參考資料抽樣及時間尺度尚未決定；不把這幾首試轉結果
-當作正式 SI 實驗資料，也不在總表填入未計算的 SI。
+第 3 步已為小量試算固定 32 秒片段與 3/8/15 秒尺度；正式批次的抽樣和長度策略
+尚未決定，不把少量試算當作全資料集評估。
 
 ### 測試與來源
 
@@ -114,3 +114,86 @@ manifest 會記錄 SHA-256，確認它真的是同一個音色檔，不只檔名
 FluidSynth CLI：<https://www.fluidsynth.org/wiki/UserManual/>
 
 MIDI RealPlayer：<https://marketplace.visualstudio.com/items?itemName=vaclis.midi-realplayer>
+
+## 第 3 步：SI 小量試算
+
+SI 使用音訊的 chroma（音高類別特徵）建立自我相似矩陣，再計算 fitness scape plot，
+偵測不同時間長度的重複結構。它不是旋律抄襲檢測，也不是聽感總分。
+本程式呼叫官方 MusDr 的 SSM 與 scape plot 實作；只將舊版 librosa 的讀檔步驟
+改為現代 keyword API，並在計算特徵前固定裁切音訊。上游原始碼保持不變。
+
+### 本次 pilot 的明確範圍
+
+- 真實曲：`POP909/training/001/001.mid`，以第 2 步完全相同的設定合成。
+- 生成曲：t08/t10/t12 的 `sample_000.wav`，每組各一首。
+- 每首取第 0 秒起的 **32 秒**，不包含 MIDI 結束後的 release tail。
+- 特徵率 2 Hz；SI short 為 3–8 秒、mid 為 8–15 秒、long 為 15–32 秒。
+- 範圍與 row indexing 沿用 MusDr；8 秒／15 秒邊界可被相鄰範圍共同包含。
+- 繼承官方的速度／移調相似性增強及閾值設定，記錄於 `protocol.json`。
+- 不隨機選曲，也不是代表性抽樣；只測試實作與時間成本。
+
+這四個值**不能**代表各組 20 首的平均，更不能直接跟全曲 H4/GS 混成相同樣本的總分。
+因此結果另外放在 `runs/metrics/si_trial/`。正式批次實驗之前，應先決定一致的抽樣、
+曲子／片段長度與時間尺度；例如均取匹配的 32 小節，或同樣的固定秒數。
+固定秒數方便這次控制成本，但不同速度的 32 秒含有不同小節數。
+
+### 本機安裝（不影響原訓練環境）
+
+音訊分析可能需要不同的 NumPy／librosa 版本，因此本機建立獨立 `.venv-si`。
+這不是要求學校主機重裝環境；目前整個試算都在本機，不變更 EDA Union 的共用套件。
+
+```bash
+# 在本機作業根目錄執行，第一次才需下載：
+git clone https://github.com/slSeanWU/MusDr.git HW2_scripts/MusDr
+python3 -m venv .venv-si
+.venv-si/bin/python -m pip install -r baseline/requirements-si.txt
+```
+
+若已經有 MusDr 或 `.venv-si`，不用重新 clone／建立。
+不要安裝上游舊版 requirements，也不要更動原本的 PyTorch。
+本次 MusDr commit：`b034cf86550963cf2021299eafb1001d0fe34853`。
+程式還會保存實際上游原始碼 SHA-256 與分析套件版本，避免只憑版本名稱判斷相同。
+
+### 執行
+
+確定 `runs/audio_trial/` 已有 real、t08、t10、t12，各資料夾有 WAV 與 render manifest。
+要建立 real 音訊，用第 2 步同一條指令，把 input 改為 `POP909/training/001/001.mid`，
+output 改為 `runs/audio_trial/real`，其餘音色、gain、效果全部相同。
+
+```bash
+.venv-si/bin/python baseline/evaluate_si.py
+```
+
+輸出：
+
+- `summary.md`：可在 VS Code 按 Ctrl+Shift+V 閱讀的試算表。
+- `per_piece.csv`：逐首 short/mid/long SI 與原始計算耗時。
+- `protocol.json`：裁切位置、音色與合成設定、分析參數、套件與原始碼資訊。
+- `cache/`：每首的 SSM、fitness 矩陣與輸入音訊雜湊。
+
+相同輸入／設定可重跑並使用 cache，不重算慢速 scape plot；改協定時指定新的
+`--output`，避免蓋掉先前實驗。更換 input WAV 會依雜湊重算。
+程式預先核對全部音訊 manifest，拒絕不同音色／gain／渲染設定、削波或內容不足 32 秒的資料。
+若分析中斷，可重新執行；已完成的矩陣會保留。
+
+預設是每組一首，不會自動展開 60 首或 896 首。Python scape plot 計算主要在 CPU，
+原實作的成本隨長度快速增加，不是把 32 秒耗時乘幾倍就可預測完整曲子的耗時。
+第一次讀音訊還可能有 librosa/Numba 編譯成本。
+
+測試索引、時間尺度與檔案驗證：
+
+```bash
+.venv-si/bin/python -m unittest discover -s baseline -p 'test_evaluate_si.py'
+```
+
+來源：<https://github.com/slSeanWU/MusDr> 及其 `mueller_audio_tools/` 內註明的 FMP 教材。
+上游程式內有完整作者及來源註記，本專案未複製上游演算法到受追蹤的檔案中。
+
+### 本機試算驗證結果
+
+四個片段均成功，第一次（含初始化／編譯）約 13.73 秒，其餘各約 1.8 秒。
+再次執行全部使用快取，分數一致；SI window extraction 已與官方
+`compute_structure_indicator` 對三個尺度核對一致。
+本次 long SI 全為 0，32 秒片段對長段落重複的機會有限；這不證明整首歌沒有長期結構。
+完整結果在 `runs/metrics/si_trial/summary.md`，套件快照在同目錄的 `environment.txt`。
+該試算資料與原先全曲 H4/GS 的樣本數不同，因此維持獨立報告。

@@ -29,3 +29,6 @@ HW2_scripts/MusDr/
 
 # Local renderer runtime; do not commit binary dependencies
 .tools/
+
+# Isolated local optional SI dependencies
+.venv-si/

@@ -229,4 +229,6 @@ python3 -m unittest discover -s baseline -p 'test_summarize_metrics.py'
 進度、下一步與統一 WAV 合成設定見 [OPTIONAL_WORKFLOW.md](OPTIONAL_WORKFLOW.md)。
 新版 `render_audio.py` 支援 piano 統一音色、遞迴子目錄、少量試轉、有效 WAV 檢查、
 重跑核對與合成 manifest。預設關閉效果，既有 MIDI 不變。
-SI 尚未開始；不需要重新訓練模型來合成 WAV。
+SI 已新增獨立的 32 秒小量試算流程（`evaluate_si.py`），結果位於
+`runs/metrics/si_trial/summary.md`；尚未完成全部曲子的 SI。
+不需要重新訓練模型來合成 WAV 或計算 SI。

@@ -1,0 +1,5 @@
+# Optional CPU-only audio analysis; does not install/change PyTorch.
+numpy>=1.24,<2.3
+scipy>=1.13,<2
+librosa==0.11.0
+pandas>=2,<3
