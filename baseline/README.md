@@ -187,3 +187,39 @@ python -m unittest discover -s baseline -p 'test_*.py'
 ```
 
 PyTorch API 參考：https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html
+
+## 指標總表：mean、std、與真實資料的差距
+
+完成 real/t08/t10/t12 的逐首評估後，在作業根目錄執行（僅需 Python 標準函式庫）：
+
+```bash
+python3 baseline/summarize_metrics.py
+```
+
+讀取 `runs/metrics/{real,t08,t10,t12}.csv`，保留原檔，新增
+`runs/metrics/summary.csv`，並在終端機印出可複製的 Markdown 表格。
+每個指標保存平均值、樣本標準差（n−1）、有效與缺失樣本數，及與 real 平均值的
+絕對差距。標準差描述歌曲間差異，不是信賴區間，也不是不同訓練 seed 的波動。
+缺失或非有限值不當成零；只有一筆有效資料時標準差留空。
+目前支援 H1/H4/GS；SI 尚未計算，不會填入零或假設已完成。
+H4/GS 分別比較，不合成單一分數；沿用上述 64 格正規化評估限制。
+
+其他實驗可自行指定檔案（須包含 reference）：
+
+```bash
+python3 baseline/summarize_metrics.py --input-dir runs/metrics --files real.csv t08.csv t10.csv t12.csv --reference real --output runs/metrics/summary.csv
+```
+
+獨立測試，不必安裝 PyTorch：
+
+```bash
+python3 -m unittest discover -s baseline -p 'test_summarize_metrics.py'
+```
+
+本次功能可獨立提交 `summarize_metrics.py`、`test_summarize_metrics.py` 及 README。
+產生的 summary.csv 仍在忽略的 runs/ 下，應與其他實驗成果一起另行備份。
+
+同一指令也會自動產生 `runs/metrics/summary.md`，提供中文欄名、四位小數、
+平均值與差距分表、標準差說明。日常閱讀建議開啟 summary.md，
+在 VS Code 按 `Ctrl+Shift+V` 開啟 Markdown 預覽；CSV 用於後續程式分析。
+若指定 `--output`，Markdown 報告會使用相同檔名、改為 `.md` 副檔名。
