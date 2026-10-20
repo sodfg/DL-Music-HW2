@@ -1,281 +1,131 @@
-# HW2 first baseline
+# Usage guide
 
-快速開始請看[專案首頁](../README.md)。本頁保留完整的訓練、推論與評估操作細節。
+Start with the [project README](../README.md) for installation, data layout, training, and generation.
+Run every command below from the repository root. Dataset files, checkpoints, audio, and results
+are stored outside Git; a fresh clone does not contain them.
 
-本專案包含基本任務 A/B、指標評估與 Optional 實驗工具。已有模型與實驗成果保存在
-`runs/`，程式資料夾本身不包含模型；作業仍需完成聽感選擇、WAV 與報告整理。
-以下指令皆從 `Hw2-DL-in-music` 根目錄執行。助教的 `HW2_scripts` 保持原樣。
+## Architecture
 
-## 資料夾導覽
+1. `music.py` converts MIDI and `beat_midi.txt` annotations into musical events and back.
+2. `prepare.py` writes `data/baseline/{sequences,tok2idx,summary}.json` and `roundtrip.mid`.
+3. `model.py` defines a randomly initialized causal Transformer: 6 layers, width 512, 8 heads,
+   and a 1,024-token context. `train.py` learns to predict the next token.
+4. `train.py` saves model weights, configuration, vocabulary, and training state in checkpoints
+   under `runs/baseline/`. `best.pt` is selected by probe loss; `last.pt` supports resuming.
+5. `generate.py` samples tokens under grammar constraints, then writes MIDI and generation records.
+6. `evaluation/` computes metrics; `audio/` renders WAV; `experiments/` runs batch comparisons.
 
-```text
-baseline/
-  music.py                 MIDI 與 tokens 轉換
-  prepare.py               前處理全部訓練曲
-  model.py                 Transformer 定義
-  train.py                 訓練與模型存檔
-  generate.py              單次生成與提示續寫
-  audio/                   統一音色的 WAV 合成
-  evaluation/              H4/GS、SI 與評估總表
-  experiments/             批次生成、SI 研究、模型深度比較
-  tests/                   自動化測試
-  docs/                    Optional 流程與深度實驗說明
-  requirements*.txt        核心與 SI 套件清單
-```
+The custom representation uses `Bar`, `Beats_N`, `Pos_N`, `Tempo_N`, `Pitch_N`, `Vel_N`, and `Dur_N`.
+A beat has 16 positions; velocity has 32 levels; durations span 1–256 positions. Tempo is quantized
+to 5 BPM from 30–210. `Beats_N` records annotated beats per bar, not a complete time signature.
+The three piano tracks are merged; pedal and detailed performance timing are not retained by
+ordinary token decoding. Check the MIDI round trip before training. TA-generated JSON uses a
+different vocabulary and cannot replace this pipeline's prepared data.
 
-核心五個檔案維持原路徑；輔助工具已搬入子資料夾，以下指令已更新。
-舊指令例如 `baseline/evaluate.py` 改為 `baseline/evaluation/evaluate.py`。
-支援直接執行檔案；例如 `python3 baseline/evaluation/summarize_metrics.py`。
-所有指令仍從作業根目錄執行，不要 cd 進子資料夾後直接套用資料相對路徑。
+## Generate and continue
 
-- [Optional 擴充實驗流程](docs/OPTIONAL_WORKFLOW.md)
-- [模型深度比較](docs/DEPTH_EXPERIMENT.md)
-- [資料夾整理與 smoke 保存規則](docs/PROJECT_LAYOUT.md)
-
-表示法沿用助教提供的 Bar/Pos/Pitch/Vel/Dur 概念，但加上 `Beats_N`：
-每小節標註拍點數。它不是完整的 MIDI 拍號，不推定分母。採樣生成預設每小節 4 拍。
-一拍分成 16 格，音符長度最多 256 格，力度量化成 32 種，音高保留 0–127。
-位置字典容納每小節最多 32 拍，遇到更多拍就報錯；不直接判定異常標註是正確拍號。
-每小節速度由其拍點間隔中位數估計，量化到 5 BPM（30–210）。這有時間近似誤差，
-請試聽 roundtrip；來源速度變化細節、踏板及三軌分工不會保留。首尾未完整小節
-保留成標註資料中的部分小節。空小節保留。
-
-這份資料與助教原始 JSON 的字典不同，不能混用；模型 checkpoint 內含對應字典。
-
-## 本機準備與驗證
+Run all three temperatures (0.8, 1.0, 1.2), each with top-k 32 and top-p 0.95:
 
 ```bash
-source .venv/bin/activate
-python -m pip install -r baseline/requirements.txt
-python baseline/prepare.py
+python baseline/experiments/run_experiments.py \
+  --checkpoint runs/baseline/best.pt --output runs/experiments --device cuda
 ```
 
-輸出在 `data/baseline/`。先聽 `roundtrip.mid`，也可還原其他歌：
+This produces 60 Task A pieces (20 per setting) and 9 Task B pieces (3 prompts × 3 settings).
+Use `--device cpu` without CUDA. The runner needs all three course prompts before it starts.
+Task A sample numbers are output indices, not POP909 song IDs.
+
+For a single Task B continuation:
 
 ```bash
-python baseline/prepare.py --roundtrip-song 149
+python baseline/generate.py --checkpoint runs/baseline/best.pt \
+  --prompt POP909/prompts/basic-b/001/001.mid \
+  --prompt-beats POP909/prompts/basic-b/001/beat_midi.txt \
+  --prompt-bars 8 --bars 32 --count 1 --temperature 1.0 \
+  --output runs/my_continuation
 ```
 
-小模型只用來確認流程，不會產生有品質的音樂：
+`--bars 32` includes the 8-bar prompt. Output preserves the original prompt notes' timing,
+pitch, and velocity; notes crossing the boundary are clipped. The continuation uses quantized
+prompt tokens as context. Generation uses a sliding context without a KV cache and can take
+longer than training. Generated bars contain 1–128 notes by default.
 
-```bash
-python baseline/train.py --output runs/_smoke/quickcheck --device cpu --steps 2 --context 32 --width 32 --layers 1 --heads 4 --batch-size 2 --eval-every 2 --eval-batches 1
-python baseline/generate.py --checkpoint runs/_smoke/quickcheck/best.pt --output runs/_smoke/quickcheck/generated --device cpu --count 1 --bars 2 --max-events-per-bar 4
-```
+## H4 / GS evaluation
 
-## EDA Union
-
-先在本機傳送專案（不複製本機 .venv、Git 和生成結果）：
-
-```bash
-rsync -av --exclude='.venv/' --exclude='.venv-si/' --exclude='.git/' --exclude='runs/' --exclude='data/' --exclude='.tools/' ./ eda_union_sodfg:~/DL_music_hw2/
-ssh eda_union_sodfg
-cd ~/DL_music_hw2
-# EDA Union 使用既有帳號共用套件，不另建 venv、不降版 PyTorch：
-python3 -c "import torch; print(torch.__version__); print(torch.cuda.is_available())"
-python3 -c "import pretty_midi, mido, numpy, pandas, tqdm; print('dependencies OK')"
-# 只在缺少模組時安裝該模組，例如：
-# python3 -m pip install --user pretty_midi
-python3 baseline/prepare.py
-nvidia-smi
-```
-
-檢查哪張卡空閒，依學校的共享 GPU 使用規則選擇。先測試 20 步：
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python3 baseline/train.py --steps 20 --eval-every 20 --eval-batches 2 --output runs/_smoke/gpu_smoke
-```
-
-正式訓練建議放在 tmux，避免網路中斷使程序停止：
-
-```bash
-tmux new -s hw2
-cd ~/DL_music_hw2
-CUDA_VISIBLE_DEVICES=0 python3 baseline/train.py --steps 20000 --validation-fraction 0 --output runs/baseline > runs_train.log 2>&1
-```
-
-按 Ctrl+B，放開後按 D，離開 tmux 而不停止訓練。重新登入後：
-
-```bash
-tmux attach -t hw2
-tail -f runs_train.log
-```
-
-若 tmux 不存在，請依學校方式取得或安裝，避免用 sudo 修改共享主機。
-6 層、512 維、8 heads、context 1024、batch 8 是起始設定，並未在 A5000 實測。
-若 OOM，先把 `--batch-size` 改成 4 或 2。20,000 是起始步數，不保證音樂品質。
-開發階段預設留約 5% 的完整歌曲作驗證，不混入助教 prompts。正式訓練指令使用
-`--validation-fraction 0`，全部 896 首參與梯度更新，符合使用完整訓練集的要求。
-這時 loss 記為 `training_probe_loss`，只表示訓練資料的表現，不能當成泛化驗證結果。
-記錄位於 `loss.jsonl` / `split.json`；best.pt 依對應 probe loss 選擇。
-
-續訓，模型參數、字典與 seed 必須與原 run 相同：
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python3 baseline/train.py --steps 20000 --validation-fraction 0 --output runs/baseline --resume runs/baseline/last.pt
-```
-
-同一總步數下可恢復 RNG/optimizer；增加總步數會改變 cosine learning rate 排程。
-只載入自己產生的 checkpoint（含 optimizer 狀態）。
-
-## Basic A：三組設定，各 20 首、32 小節
-
-```bash
-python baseline/generate.py --checkpoint runs/baseline/best.pt --output runs/a_t08 --temperature 0.8 --top-k 32 --top-p 0.95
-python baseline/generate.py --checkpoint runs/baseline/best.pt --output runs/a_t10 --temperature 1.0 --top-k 32 --top-p 0.95
-python baseline/generate.py --checkpoint runs/baseline/best.pt --output runs/a_t12 --temperature 1.2 --top-k 32 --top-p 0.95
-```
-
-固定相同 seed，便於比較。採樣會限制 token 順序與位置單調性，每小節至少一個音符，
-最多 128 個音符，並精確以 Bar/EOS 結束。這些規則必須寫入報告。
-context 滑動窗口不使用 KV cache，生成可能比較慢；不是整首歌曲長度的 context。
-
-## Basic B：每首 prompt 三組設定
-
-以下對 001 執行；把路徑換成 002、003，總共輸出 9 首：
-
-```bash
-python baseline/generate.py --checkpoint runs/baseline/best.pt --prompt POP909/prompts/basic-b/001/001.mid --prompt-beats POP909/prompts/basic-b/001/beat_midi.txt --prompt-bars 8 --bars 32 --count 1 --temperature 0.8 --output runs/b_001_t08
-python baseline/generate.py --checkpoint runs/baseline/best.pt --prompt POP909/prompts/basic-b/001/001.mid --prompt-beats POP909/prompts/basic-b/001/beat_midi.txt --prompt-bars 8 --bars 32 --count 1 --temperature 1.0 --output runs/b_001_t10
-python baseline/generate.py --checkpoint runs/baseline/best.pt --prompt POP909/prompts/basic-b/001/001.mid --prompt-beats POP909/prompts/basic-b/001/beat_midi.txt --prompt-bars 8 --bars 32 --count 1 --temperature 1.2 --output runs/b_001_t12
-```
-
-模型條件是量化後的 prompt tokens；MIDI 輸出保留 prompt 原始音符的音高、力度與
-秒數（越過八小節邊界的延音裁切），生成尾段移至原始 prompt 的結束時間。
-輸出合併成一軌，保留邊界前的原始 MIDI tempo、控制事件與通道資訊；
-續寫以 MIDI ticks 接到原始提示的精確結束時間，使用生成的速度。
-跨越邊界的原曲音符在邊界終止，並釋放 channel 0 踏板，避免懸掛音符。
-每首選最佳設定，MIDI、WAV 和報告中都清楚標註。
-
-## 客觀評估與 WAV
-
-先安裝助教指定 MusDr（官方來源 https://github.com/slSeanWU/MusDr）：
+Obtain MusDr once, then evaluate the prepared reference and each generated setting:
 
 ```bash
 git clone https://github.com/slSeanWU/MusDr.git HW2_scripts/MusDr
-python baseline/evaluation/evaluate.py --data data/baseline --output runs/metrics_real.csv
-python baseline/evaluation/evaluate.py --data runs/a_t08 --output runs/metrics_t08.csv
-python baseline/evaluation/evaluate.py --data runs/a_t10 --output runs/metrics_t10.csv
-python baseline/evaluation/evaluate.py --data runs/a_t12 --output runs/metrics_t12.csv
+python baseline/evaluation/evaluate.py --data data/baseline --output runs/metrics/real.csv
+for setting in t08 t10 t12; do
+  python baseline/evaluation/evaluate.py \
+    --data "runs/experiments/basic_a/$setting" --output "runs/metrics/$setting.csv"
+done
+python baseline/evaluation/summarize_metrics.py
 ```
 
-MusDr 可能需要額外依賴，請依其 README 安裝。這部分尚未在本機驗證。
-評估器把每個小節位置映射到共同的 64 格相對位置，再呼叫助教程式。
-原因是完整字典預留 512 個位置，直接傳入會使 GS 分母過大、人為提高分數。
-真實和生成資料都使用相同映射；Beats token 不傳入評估。
-這是在小節相對時間上的節奏比較，與直接用助教原始 128 格字典得到的分數不同，
-不要混用舊分數。H4 仍以四小節為窗口。真實資料含不同小節拍點數，生成固定四拍，
-報告應交代這個比較限制及 64 格正規化流程。
-SI 是選做，目前未實作。
+Read `runs/metrics/summary.md` for means, sample standard deviations, and absolute differences
+from the real-data means. CSV files retain per-piece scores and aggregate values.
+H4 measures pitch-class entropy over four bars; GS measures similarity of note-onset patterns.
+The evaluator maps every bar to 64 relative positions for **both** real and generated music.
+Do not mix these scores with results using a different grid. Compare metrics separately;
+closeness to the reference mean does not establish originality or listening quality.
 
-WAV 需要 FluidSynth 執行檔與有授權的 `.sf2` SoundFont：
+## WAV and optional experiments
+
+Install FluidSynth separately and obtain a licensed `.sf2` SoundFont. Replace the example
+SoundFont path with your actual file:
 
 ```bash
-python baseline/audio/render_audio.py --input runs/a_t08 --output runs/a_t08/wav --soundfont /path/to/piano.sf2
+python baseline/audio/render_audio.py --input runs/experiments/basic_a/t10 \
+  --output runs/audio/t10 --soundfont /path/to/piano.sf2 --gain 0.025
 ```
 
-把最佳 Basic A 的 20 首與全部 Basic B 的 9 首都轉為 WAV。FluidSynth/SoundFont
-目前未自動下載或在共享主機安裝，音訊合成需另行驗證。
+Use `--fluidsynth /path/to/fluidsynth` if the executable is not on PATH. Keep the same SoundFont,
+gain, and rendering settings across audio comparisons. SI has separate dependencies in
+`baseline/requirements-si.txt`; it is not needed for MIDI generation or H4/GS.
 
-## 繳交與版本控制
+Detailed experiment notes are currently in Traditional Chinese:
 
-commit baseline 程式、README 和 requirements；data、runs、POP909 不提交。
-模型提交資料夾請保留 best.pt、tok2idx.json、config.json、requirements、全部程式及
-實際 inference 指令。不要上傳訓練或前處理資料。此版不包含 Bonus 伴奏與正式報告。
-來源：課程 sample tokenization/evaluation code；PyTorch SDPA 與 cross entropy API。
+| Experiment | Notes |
+|---|---|
+| WAV rendering and 48-second SI | [Optional workflow](docs/OPTIONAL_WORKFLOW.md) |
+| 3-layer vs. 6-layer Transformer | [Depth experiment](docs/DEPTH_EXPERIMENT.md) |
+| Bar/position vs. MIDI-like tokens | [Representation experiment](docs/REPRESENTATION_EXPERIMENT.md) |
+| Sampling comparisons | [Sampling pilot](docs/SAMPLING_PILOT.md) |
 
-## 已完成的本機檢查
+These runners support planning before execution. Inspect `--help` and use a new output directory
+for a changed experiment; do not overwrite historical plans or mix smoke results with formal runs.
 
-CPU 小模型訓練與 checkpoint、32 小節生成、8+24 續寫可運行。
-正式 A5000 訓練、MusDr 評估、FluidSynth WAV 尚待 EDA Union 環境驗證。
-Smoke 結果來自只訓練幾步的模型，僅驗證程式，不代表生成品質。
+## GPU, remote runs, and checks
 
-也可以一次執行三組 Basic A 與全部九首 Basic B（預設共 69 首）：
+Select a GPU explicitly with `CUDA_VISIBLE_DEVICES=0` before a Python command. Follow the host's
+GPU-sharing rules. On EDA Union, keep the existing compatible shared PyTorch installation;
+install only missing packages instead of replacing the shared environment.
+For a long remote run, start `tmux new -s hw2`, execute the training command, then detach with
+Ctrl+B followed by D. Reconnect with `tmux attach -t hw2`. tmux keeps the terminal session alive;
+it does not select a GPU or automatically capture a process started elsewhere.
+
+Resume with the same architecture, vocabulary, seed, and training settings:
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python baseline/experiments/run_experiments.py --checkpoint runs/baseline/best.pt
+python baseline/train.py --steps 20000 --validation-fraction 0 \
+  --output runs/baseline --resume runs/baseline/last.pt
 ```
 
-本機測試用 `--device cpu --count 1 --max-events-per-bar 4`，正式成果不應使用 smoke checkpoint。
+Changing total steps also changes the learning-rate schedule. The default training command
+without `--validation-fraction 0` holds out approximately 5% of songs for validation.
 
-程式單元檢查（因果遮罩、長小節還原與續寫接點）：
+A **smoke test** is a short execution check, not a quality evaluation:
 
 ```bash
+python baseline/train.py --output runs/_smoke/quickcheck --device cpu --steps 2 \
+  --context 32 --width 32 --layers 1 --heads 4 --batch-size 2 --eval-every 2 --eval-batches 1
+python baseline/generate.py --checkpoint runs/_smoke/quickcheck/best.pt \
+  --output runs/_smoke/quickcheck/generated --device cpu --count 1 --bars 2 --max-events-per-bar 4
 python -m unittest discover -s baseline/tests -p 'test_*.py'
 ```
 
-PyTorch API 參考：https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html
-
-## 指標總表：mean、std、與真實資料的差距
-
-完成 real/t08/t10/t12 的逐首評估後，在作業根目錄執行（僅需 Python 標準函式庫）：
-
-```bash
-python3 baseline/evaluation/summarize_metrics.py
-```
-
-讀取 `runs/metrics/{real,t08,t10,t12}.csv`，保留原檔，新增
-`runs/metrics/summary.csv`，並在終端機印出可複製的 Markdown 表格。
-每個指標保存平均值、樣本標準差（n−1）、有效與缺失樣本數，及與 real 平均值的
-絕對差距。標準差描述歌曲間差異，不是信賴區間，也不是不同訓練 seed 的波動。
-缺失或非有限值不當成零；只有一筆有效資料時標準差留空。
-目前支援 H1/H4/GS；SI 尚未計算，不會填入零或假設已完成。
-H4/GS 分別比較，不合成單一分數；沿用上述 64 格正規化評估限制。
-
-其他實驗可自行指定檔案（須包含 reference）：
-
-```bash
-python3 baseline/evaluation/summarize_metrics.py --input-dir runs/metrics --files real.csv t08.csv t10.csv t12.csv --reference real --output runs/metrics/summary.csv
-```
-
-獨立測試，不必安裝 PyTorch：
-
-```bash
-python3 -m unittest discover -s baseline/tests -p 'test_summarize_metrics.py'
-```
-
-本次功能可獨立提交 `summarize_metrics.py`、`test_summarize_metrics.py` 及 README。
-產生的 summary.csv 仍在忽略的 runs/ 下，應與其他實驗成果一起另行備份。
-
-同一指令也會自動產生 `runs/metrics/summary.md`，提供中文欄名、四位小數、
-平均值與差距分表、標準差說明。日常閱讀建議開啟 summary.md，
-在 VS Code 按 `Ctrl+Shift+V` 開啟 Markdown 預覽；CSV 用於後續程式分析。
-若指定 `--output`，Markdown 報告會使用相同檔名、改為 `.md` 副檔名。
-
-## Optional 擴充實驗流程
-
-進度、下一步與統一 WAV 合成設定見 [OPTIONAL_WORKFLOW.md](docs/OPTIONAL_WORKFLOW.md)。
-新版 `render_audio.py` 支援 piano 統一音色、遞迴子目錄、少量試轉、有效 WAV 檢查、
-重跑核對與合成 manifest。預設關閉效果，既有 MIDI 不變。
-SI 已新增獨立的 32 秒小量試算流程（`evaluate_si.py`），結果位於
-`runs/metrics/si_trial/summary.md`；尚未完成全部曲子的 SI。
-不需要重新訓練模型來合成 WAV 或計算 SI。
-
-48 秒批次 SI 計畫與執行入口為 `run_si_study.py`：固定使用 60 首生成與 20 首
-抽樣真實參考。預設只建立／核對計畫，需明確加 `--execute` 才會合成與計算。
-詳見 Optional 流程的「48 秒批次 SI 比較」；不覆蓋 H4/GS 或 32 秒 pilot 報告。
-
-## 模型深度比較
-
-新增 [DEPTH_EXPERIMENT.md](docs/DEPTH_EXPERIMENT.md) 與 `run_depth_experiment.py`：
-保留六層 baseline，只改三層，固定資料、訓練與採樣設定。預設只檢視計畫；
-明確使用 `--stage all` 才會訓練與生成。H4/GS 比較已完成；成本 benchmark 另行處理。
-
-SI 比較入口為 `baseline/experiments/run_depth_si.py`：沿用相同的 20 首真實參考與
-六層音訊，補上三層音訊，三組均使用同一版本程式計算開頭 48 秒的 SI。
-預設只核對計畫，加 `--execute` 執行；不訓練模型或生成新的 MIDI。
-結果在 `runs/depth_3_vs_6/si48/comparison.md`，操作及 EDA 同步方式見上述文件。
-
-套件相容性：核心 requirements 現在允許 PyTorch 2.5–2.6，避免把 EDA Union
-既有的 2.6.0+cu124 降成 2.5.1。學校主機仍優先使用現有共用套件，缺什麼才補什麼；
-實驗實際版本寫入 execution.json。這是相容範圍，不代表已在所有版本完整測試。
-
-## Token 表示法比較
-
-新增獨立的 `representations/`，保留目前 Bar/Pos baseline，實作 beat-grid MIDI-like
-的 NoteOn/NoteOff/Vel/TimeShift/Tempo。896 首轉換已逐首檢查 MIDI 事件及評分 onset
-一致；核心訓練程式不變，另訓練一個六層模型，固定訓練 token 預算與生成設定。
-
-操作、限制與遠端命令見 [REPRESENTATION_EXPERIMENT.md](docs/REPRESENTATION_EXPERIMENT.md)。
-入口是 `baseline/experiments/run_representation_experiment.py`，預設僅檢視計畫。
-正式成果放在 `runs/representation_midi_like/`，不覆蓋原模型或 Task B。
+The baseline has been run locally on CPU and on an RTX A5000; H4/GS, WAV, SI, and depth comparisons
+have also been executed. This does not imply every dependency version or optional configuration
+has been tested. Keep code and dependency lists in Git; back up datasets and `runs/` separately.

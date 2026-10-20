@@ -156,3 +156,41 @@ Bar/Pos 則高於參考；因此不能用分數越高就越好來排名，也不
 均一致。MIDI 音樂長度約 61.93–107.69 秒，符合後續相同 48 秒 SI 的長度需求。
 各項標準差與平均差距見 runs/representation_midi_like/comparison.md。
 下一步試聽與 SI 尚未完成，不在此表列入未計算的結果。
+
+## 48 秒 SI 與收尾
+
+MIDI-like 的 20 首已補齊相同音色、gain=0.025 的完整 WAV，並各分析前 48 秒。
+真實與 Bar/Pos 的參考分數只在完整 SI 協定（含 wrapper 雜湊、軟體版本及渲染設定）
+完全相同，且來源 MIDI/WAV 雜湊一致時才沿用。重現：
+
+```bash
+.venv/bin/python baseline/audio/render_audio.py \
+  --input runs/representation_midi_like/generated \
+  --output runs/representation_midi_like/si48/audio/midi_like \
+  --soundfont /path/to/GeneralUser-GS.sf2 --fluidsynth fluidsynth --gain 0.025
+.venv-si/bin/python baseline/evaluation/evaluate_si.py --scope batch \
+  --audio-root runs/representation_midi_like/si48/audio --groups midi_like \
+  --limit-per-group 20 --duration 48 \
+  --output runs/representation_midi_like/si48/groups/midi_like
+.venv/bin/python baseline/experiments/summarize_representation_si.py
+```
+
+SI 平均：真實 short/mid/long=0.3299/0.2733/0.1625，Bar/Pos=0.2934/0.2127/0.0901，
+MIDI-like=0.2973/0.1744/0.0247。MIDI-like 的 short 略近；Bar/Pos 的 mid、long 較近。
+不能把這項單 seed、20 首片段比較當成統計顯著性或整體品質結論。
+結果與標準差在 runs/representation_midi_like/si48/comparison.md。
+
+Task B 的九首 WAV 已在 runs/listening/basic_b 補齊，來源/無截波檢查通過。
+重新核對 MIDI tick 邊界之前的所有原始提示事件，9/9 一致；接點受 MIDI tick
+解析度影響，最大與標註時間差約 1.05ms，並非任意修改提示。
+
+本機繳交草稿可使用 assemble_submission.py 建立，預設保留 Task A 與 Task B 最佳版本
+待選，不會上傳或操作 Git。若已有草稿，請使用新的 --output，避免覆蓋：
+
+```bash
+.venv/bin/python baseline/experiments/assemble_submission.py \
+  --soundfont /path/to/GeneralUser-GS.sf2 --output output/submission_draft
+```
+
+試聽決定後可在新的輸出目錄加 --task-a t08（或 t10/t12），建立相對應的 20 MIDI+20 WAV。
+另需記錄三個 Task B 最佳版本、加入正式報告、上傳雲端並確認讀取權限。
