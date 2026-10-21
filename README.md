@@ -38,7 +38,7 @@ python baseline/prepare.py
 # Check data/baseline/roundtrip.mid before training.
 python baseline/train.py --steps 20000 --validation-fraction 0 --output runs/baseline
 python baseline/generate.py --checkpoint runs/baseline/best.pt \
-  --output runs/my_samples --count 2 --bars 32
+  --output runs/my_samples --count 2 --bars 32 --generation-policy boundary-v2
 ```
 
 Open `runs/my_samples/*.mid` in a MIDI player. Training and generation automatically use CUDA
@@ -49,6 +49,11 @@ not an independent validation score.
 **Already have a model?** Skip preparation and training and use the generation command above.
 A compatible checkpoint contains the model configuration and token vocabulary; Task A inference
 needs no dataset. No public checkpoint download is currently provided.
+
+The corrected generation and evaluation workflow is documented in
+[CORRECTED_GENERATION.md](baseline/docs/CORRECTED_GENERATION.md). Current formal
+results use `runs/corrected_boundary_v2`. Historical Bar/Pos generated scores and
+report drafts through v3 are retained as backups and are superseded.
 
 ## Project layout
 

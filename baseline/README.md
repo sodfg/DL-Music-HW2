@@ -28,7 +28,7 @@ Run all three temperatures (0.8, 1.0, 1.2), each with top-k 32 and top-p 0.95:
 
 ```bash
 python baseline/experiments/run_experiments.py \
-  --checkpoint runs/baseline/best.pt --output runs/experiments --device cuda
+  --checkpoint runs/baseline/best.pt --output runs/experiments_boundary_v2 --device cuda
 ```
 
 This produces 60 Task A pieces (20 per setting) and 9 Task B pieces (3 prompts × 3 settings).
@@ -42,7 +42,7 @@ python baseline/generate.py --checkpoint runs/baseline/best.pt \
   --prompt POP909/prompts/basic-b/001/001.mid \
   --prompt-beats POP909/prompts/basic-b/001/beat_midi.txt \
   --prompt-bars 8 --bars 32 --count 1 --temperature 1.0 \
-  --output runs/my_continuation
+  --output runs/my_continuation --generation-policy boundary-v2
 ```
 
 `--bars 32` includes the 8-bar prompt. Output preserves the original prompt notes' timing,
@@ -50,21 +50,36 @@ pitch, and velocity; notes crossing the boundary are clipped. The continuation u
 prompt tokens as context. Generation uses a sliding context without a KV cache and can take
 longer than training. Generated bars contain 1–128 notes by default.
 
+For the ending-pileup diagnostic, pass `--generation-policy boundary-v2` to
+`generate.py` and use a NEW output directory. This prevents simultaneous duplicate
+onset/pitch pairs while allowing chords and repeated notes at later times. In the
+last requested bar, a sampled `Bar` is translated to `<EOS>` without adding another
+bar; the model can finish at its learned bar boundary instead of relying solely on
+the rarely learned end-of-song token. Original note-duration cropping remains.
+The default is `legacy` to preserve historical experiment behavior. Results from
+the two policies must be labeled separately and evaluated again; historical metric
+tables do not apply to newly generated files. This changes inference, not weights.
+
+The formal corrected batch and its report workflow are described in
+[CORRECTED_GENERATION.md](docs/CORRECTED_GENERATION.md). New results live under
+`runs/corrected_boundary_v2`; the older report and submission draft are historical
+backups and must not be submitted as the corrected results.
+
 ## H4 / GS evaluation
 
 Obtain MusDr once, then evaluate the prepared reference and each generated setting:
 
 ```bash
 git clone https://github.com/slSeanWU/MusDr.git HW2_scripts/MusDr
-python baseline/evaluation/evaluate.py --data data/baseline --output runs/metrics/real.csv
+python baseline/evaluation/evaluate.py --data data/baseline --output runs/metrics_boundary_v2/real.csv
 for setting in t08 t10 t12; do
   python baseline/evaluation/evaluate.py \
-    --data "runs/experiments/basic_a/$setting" --output "runs/metrics/$setting.csv"
+    --data "runs/experiments_boundary_v2/basic_a/$setting" --output "runs/metrics_boundary_v2/$setting.csv"
 done
-python baseline/evaluation/summarize_metrics.py
+python baseline/evaluation/summarize_metrics.py --input-dir runs/metrics_boundary_v2
 ```
 
-Read `runs/metrics/summary.md` for means, sample standard deviations, and absolute differences
+Read `runs/metrics_boundary_v2/summary.md` for means, sample standard deviations, and absolute differences
 from the real-data means. CSV files retain per-piece scores and aggregate values.
 H4 measures pitch-class entropy over four bars; GS measures similarity of note-onset patterns.
 The evaluator maps every bar to 64 relative positions for **both** real and generated music.
@@ -77,8 +92,8 @@ Install FluidSynth separately and obtain a licensed `.sf2` SoundFont. Replace th
 SoundFont path with your actual file:
 
 ```bash
-python baseline/audio/render_audio.py --input runs/experiments/basic_a/t10 \
-  --output runs/audio/t10 --soundfont /path/to/piano.sf2 --gain 0.025
+python baseline/audio/render_audio.py --input runs/experiments_boundary_v2/basic_a/t10 \
+  --output runs/audio_boundary_v2/t10 --soundfont /path/to/piano.sf2 --gain 0.025
 ```
 
 Use `--fluidsynth /path/to/fluidsynth` if the executable is not on PATH. Keep the same SoundFont,

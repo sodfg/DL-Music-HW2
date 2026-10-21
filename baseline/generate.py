@@ -8,12 +8,21 @@ from model import Config, MusicTransformer
 from music import encode, decode, dump, PPB, beat_grid, preserve_prompt
 
 
-def allowed(tokens, vocab, target, generated_beats, max_events):
+def allowed(tokens, vocab, target, generated_beats, max_events, policy='legacy'):
     last = tokens[-1]
     bars = tokens.count('Bar')
     bar_idx = len(tokens)-1-tokens[::-1].index('Bar') if bars else 0
     current = tokens[bar_idx:]
     groups = lambda prefix: [t for t in vocab if t.startswith(prefix+'_')]
+    pitches = groups('Pitch')
+    used = {}
+    onset = None
+    if policy == 'boundary-v2':
+        for token in current:
+            if token.startswith('Pos_'):
+                onset = int(token.split('_')[1])
+            elif token.startswith('Pitch_') and onset is not None:
+                used.setdefault(onset, set()).add(token)
     if last == '<BOS>':
         return ['Bar']
     if last == 'Bar':
@@ -28,11 +37,16 @@ def allowed(tokens, vocab, target, generated_beats, max_events):
     pos = next((int(t.split('_')[1]) for t in reversed(current) if t.startswith('Pos_')), 0)
     if last.startswith('Pos_'):
         # An onset must be followed by one complete note.
-        return groups('Pitch')
+        return [t for t in pitches if t not in used.get(pos, set())]
     ending = ['Bar'] if bars < target else ['<EOS>']
+    if policy == 'boundary-v2' and bars == target:
+        # A learned bar boundary also completes the requested last bar. Sample
+        # its actual logit, then translate it to EOS before writing any tokens.
+        ending = ['Bar', '<EOS>']
     if sum(t.startswith('Pitch_') for t in current) >= max_events:
         return ending
-    choices = [f'Pos_{i}' for i in range(pos, beats*PPB)]
+    choices = [f'Pos_{i}' for i in range(pos, beats*PPB)
+               if len(used.get(i, set())) < len(pitches)]
     # Require at least one note in every generated bar.
     return choices + (ending if any(t.startswith('Dur_') for t in current) else [])
 
@@ -63,6 +77,8 @@ def main():
     p.add_argument('--top-p', type=float, default=.95)
     p.add_argument('--seed', type=int, default=123)
     p.add_argument('--max-events-per-bar', type=int, default=128)
+    p.add_argument('--generation-policy', choices=['legacy', 'boundary-v2'], default='legacy',
+                   help='boundary-v2 accepts a final Bar as completion and prevents duplicate onset/pitch pairs')
     p.add_argument('--prompt', help='Prompt MIDI path; requires its beat_midi.txt')
     p.add_argument('--prompt-beats')
     p.add_argument('--prompt-bars', type=int, default=8)
@@ -112,9 +128,12 @@ def main():
                     raise RuntimeError('Generation guard reached; no partial result written')
                 ids = torch.tensor([[vocab[t] for t in tokens[-model.config.context:]]], device=a.device)
                 logits = model(ids)[0,-1]
-                choices = allowed(tokens,vocab,a.bars,a.beats,a.max_events_per_bar)
+                choices = allowed(tokens,vocab,a.bars,a.beats,a.max_events_per_bar,a.generation_policy)
                 next_id = sample(logits,[vocab[t] for t in choices],a.temperature,a.top_k,a.top_p)
-                tokens.append(inverse[next_id])
+                token = inverse[next_id]
+                if a.generation_policy == 'boundary-v2' and token == 'Bar' and tokens.count('Bar') == a.bars:
+                    token = '<EOS>'
+                tokens.append(token)
             name = f'{Path(a.prompt).stem + "_" if a.prompt else "sample_"}{n:03d}'
             path = output/f'{name}.mid'
             ticks = decode(tokens,path)

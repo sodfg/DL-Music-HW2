@@ -6,13 +6,16 @@ import sys
 
 p=argparse.ArgumentParser()
 p.add_argument('--checkpoint',required=True)
-p.add_argument('--output',default='runs/experiments')
+p.add_argument('--output',default='runs/experiments_boundary_v2')
 p.add_argument('--prompts',default='POP909/prompts/basic-b')
 p.add_argument('--device',default='cuda')
 p.add_argument('--count',type=int,default=20)
 p.add_argument('--max-events-per-bar',type=int,default=128)
 p.add_argument('--seed',type=int,default=123)
+p.add_argument('--generation-policy',choices=['legacy','boundary-v2'],default='boundary-v2')
 a=p.parse_args()
+if Path(a.output).exists() and any(Path(a.output).iterdir()):
+    p.error('Output is not empty; select a new directory to preserve existing experiments')
 script=Path(__file__).resolve().parents[1]/'generate.py'
 prompts=Path(a.prompts)
 for name in ('001','002','003'):
@@ -20,7 +23,8 @@ for name in ('001','002','003'):
         if not f.is_file():
             p.error(f'Missing prompt: {f}')
 base=[sys.executable,str(script),'--checkpoint',a.checkpoint,'--device',a.device,
-      '--seed',str(a.seed),'--max-events-per-bar',str(a.max_events_per_bar)]
+      '--seed',str(a.seed),'--max-events-per-bar',str(a.max_events_per_bar),
+      '--generation-policy',a.generation_policy]
 for temperature in (.8,1.,1.2):
     label=f't{round(temperature*10):02d}'
     options=['--temperature',str(temperature),'--top-k','32','--top-p','.95']
