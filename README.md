@@ -1,3 +1,7 @@
+# 目前繳交版本
+
+先讀 [START_HERE.md](START_HERE.md)。雲端整理包在 `output/UPLOAD_HW2_B12901157/`，本版共39 MIDI＋39 WAV、四個推論模型與v5報告。Task A已選t12；Task B最佳版註記及雲端連結待補。
+
 # Piano Music Generation
 
 Train a decoder-only Transformer from scratch on the course POP909 split and generate piano MIDI.
