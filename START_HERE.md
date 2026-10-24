@@ -1,6 +1,6 @@
 # Start here
 
-Upload folder: **output/UPLOAD_HW2_B12901157/**. Upload this folder rather than the complete working repository.
+Upload folder: **output/submission/**. Upload this folder rather than the complete working repository.
 
 - [Cloud submission](https://drive.google.com/drive/folders/1NRQpT-gkLJNPZY7wvyQdwWZ_qVDI4K6x?usp=sharing)
 - [Source repository](https://github.com/sodfg/DL-Music-HW2)
@@ -9,7 +9,7 @@ Upload folder: **output/UPLOAD_HW2_B12901157/**. Upload this folder rather than 
 
 | Location | Purpose |
 |---|---|
-| output/UPLOAD_HW2_B12901157/ | Submission code, four inference models, report, and 39 MIDI/WAV pairs |
+| output/submission/ | Public code, four inference models, metrics, and 39 MIDI/WAV pairs |
 | output/report/ | Current editable report and PDF, v7 |
 | output/archive/ | Superseded reports and submission drafts |
 | baseline/ | Project source, tests, and documentation |

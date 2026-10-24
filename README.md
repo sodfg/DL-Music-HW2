@@ -14,13 +14,12 @@ MIDI + beat annotations → tokens → Transformer → generated tokens → MIDI
 
 ## Submission and downloads
 
-- [Google Drive: report, checkpoints, generated MIDI/WAV, and source snapshot](https://drive.google.com/drive/folders/1NRQpT-gkLJNPZY7wvyQdwWZ_qVDI4K6x?usp=sharing)
+- [Google Drive: checkpoints, generated MIDI/WAV, metrics, and source snapshot](https://drive.google.com/drive/folders/1NRQpT-gkLJNPZY7wvyQdwWZ_qVDI4K6x?usp=sharing)
 - [GitHub: source code and documentation](https://github.com/sodfg/DL-Music-HW2)
 - [Start here](START_HERE.md) and [submission guide](baseline/docs/SUBMISSION_GUIDE.md)
 
 Selected Task A configuration: **t12**. Preferred Task B versions: **001=t08, 002=t10, 003=t08**.
-All nine Task B MIDI/WAV pairs remain in the submission. The current report is v7, with both links on its first page.
-Sharing links were supplied by the author; download permissions have not been independently verified.
+All nine Task B MIDI/WAV pairs remain in the submission. The full report is submitted privately through NTU COOL; it is not part of the public download. Its cover links to this repository and the public artifacts.
 
 ## Use a pretrained model first
 
@@ -100,3 +99,7 @@ The baseline uses custom `Bar / Beats / Pos / Tempo / Pitch / Vel / Dur` events 
 
 Based on course examples; metrics use [MusDr](https://github.com/slSeanWU/MusDr).
 WAV export requires [FluidSynth](https://www.fluidsynth.org/) and a separately obtained SoundFont.
+
+## Checkpoint safety
+
+Inference uses restricted `weights_only=True` loading. Download checkpoints only from a trusted source and use a maintained PyTorch installation. A model file is not a reason to enable unrestricted pickle loading.

@@ -9,8 +9,9 @@ prompt MIDI files, and beat/chord annotations are not redistributed in the curre
 repository tree or submission package. They may be retained in a private local copy.
 
 The [cloud submission](https://drive.google.com/drive/folders/1NRQpT-gkLJNPZY7wvyQdwWZ_qVDI4K6x?usp=sharing)
-contains pretrained inference checkpoints, generated MIDI/WAV results, source code,
-and the report. It is not a dataset download location.
+contains pretrained inference checkpoints, generated MIDI/WAV results, metrics, and
+source code. The full report is submitted privately through NTU COOL. The public
+folder is not a dataset download location.
 
 | Goal | Additional data required? |
 |---|---|

@@ -1,6 +1,6 @@
 # HW2 submission package
 
-- [Google Drive: models, generated music, report, and source snapshot](https://drive.google.com/drive/folders/1NRQpT-gkLJNPZY7wvyQdwWZ_qVDI4K6x?usp=sharing)
+- [Google Drive: models, generated music, metrics, and source snapshot](https://drive.google.com/drive/folders/1NRQpT-gkLJNPZY7wvyQdwWZ_qVDI4K6x?usp=sharing)
 - [GitHub: source repository](https://github.com/sodfg/DL-Music-HW2)
 
 Task A selection: t12. Preferred Task B versions:001=t08,002=t10,003=t08. See BEST_VERSIONS.md and selections.json. All nine Task B versions are included.
@@ -9,7 +9,6 @@ Task A selection: t12. Preferred Task B versions:001=t08,002=t10,003=t08. See BE
 
 | Directory/file | Purpose |
 |---|---|
-| report/ | Current PDF and editable PPTX; submit the PDF separately to NTU COOL |
 | generation_results/task_a_t12/ | 20unconditional32-bar pieces,20 MIDI+20 WAV |
 | generation_results/task_b/ | 3prompts x3settings,9 MIDI+9 WAV,all submitted |
 | generation_results/bonus/ | 10melody-plus-piano pieces,16annotated bars each,10 MIDI+10 WAV |
@@ -25,7 +24,7 @@ Task A selection: t12. Preferred Task B versions:001=t08,002=t10,003=t08. See BE
 Total:39 MIDI+39 WAV. WAVs use a common gain of GAIN_VALUE,44100Hz stereo PCM16,with zero clipping. SI evaluation inputs remain at gain0.025; louder listening WAVs do not replace SI inputs.
 Task B exports align8prompt+24continuation bars with timing error below0.05ms. Bonus exports follow16annotated bars with variable beat counts,not a forced4/4meter.
 
-The package excludes training/preprocessed data,course prompts,caches,virtual environments,Git history,and other researchers' neural checkpoints. The embedded checkpoint vocabulary is necessary inference configuration. Obtain course data separately for preparation,prompted generation,and evaluation.
+The package excludes the private report,training/preprocessed data,course prompts,caches,virtual environments,Git history,and other researchers' neural checkpoints. The embedded checkpoint vocabulary is necessary inference configuration. Obtain course data separately for preparation,prompted generation,and evaluation.
 
 The course-provided, preprocessed POP909 split is not redistributed by this project.
 Exact retraining requires that course version; the original upstream POP909 release
@@ -39,11 +38,11 @@ Python3.10+. Install a PyTorch build appropriate for your CPU/CUDA environment,t
 
 ```bash
 python3 -m pip install -r requirements.txt
-python3 code/baseline/generate.py --checkpoint models/baseline_6.pt --output generated/task_a --count 20 --bars 32 --temperature 1.2 --top-k 32 --top-p .95 --seed 123 --generation-policy boundary-v2
+python3 code/baseline/generate.py --checkpoint models/baseline_6.pt --output generated/task_a --count 1 --bars 32 --temperature 1.2 --top-k 32 --top-p .95 --seed 123 --generation-policy boundary-v2
 python3 code/baseline/audio/render_audio.py --input generated/task_a --output generated/task_a_wav --soundfont audio_assets/GeneralUser-GS.sf2 --fluidsynth fluidsynth --gain GAIN_VALUE
 ```
 
-Install FluidSynth separately or provide its executable path with --fluidsynth. Rendering needs the included SoundFont and its license.
+Install FluidSynth separately or provide its executable path with --fluidsynth. Rendering needs the included SoundFont and its license. On Ubuntu/Debian, install it with `sudo apt install fluidsynth`, then check `fluidsynth --version`. Inference uses restricted checkpoint loading; use trusted files and a maintained PyTorch installation.
 
 Task B:replace COURSE_BASIC_B with the external course prompt folder. This example reproduces preferred prompt001,t08; use prompt002,t10 and prompt003,t08 for the other preferred versions.
 
@@ -69,5 +68,5 @@ Reproducing metrics may require separately obtaining course data and MusDr; see 
 
 ## Final handoff
 
-Replace changed files in the shared Drive folder,verify that the TA can download them,and submit the PDF plus cloud link to NTU COOL. Both sharing URLs appear on the report cover. No automatic cloud replacement,Git commit,or push is performed by the packaging script.
+Replace changed files in the shared Drive folder,verify that the TA can download them,and submit the PDF plus cloud link to NTU COOL. The report remains private and is submitted directly to COOL; both sharing URLs appear on its cover. No automatic cloud replacement,Git commit,or push is performed by the packaging script.
 If packaged files are edited later,refresh verification/file_manifest.json.

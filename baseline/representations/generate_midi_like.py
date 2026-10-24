@@ -115,7 +115,7 @@ def main():
         p.error('Output already contains samples; choose a new output directory')
     if a.device == 'cpu':
         torch.set_num_threads(min(4,torch.get_num_threads()))
-    saved = torch.load(a.checkpoint, map_location=a.device, weights_only=False)
+    saved = torch.load(a.checkpoint, map_location=a.device, weights_only=True)
     vocab = vocabulary()
     if saved['vocab'] != vocab:
         p.error('Checkpoint does not use this MIDI-like vocabulary')

@@ -4,7 +4,7 @@
 
 ## Upload folder
 
-Use output/UPLOAD_HW2_B12901157 rather than the complete repository.
+Use output/submission rather than the complete repository.
 
 | Task | MIDI | WAV | Selection/source |
 |---|---:|---:|---|
@@ -13,7 +13,7 @@ Use output/UPLOAD_HW2_B12901157 rather than the complete repository.
 | Bonus | 10 | 10 | bonus_aligned_v2,16annotated bars each |
 | Total | 39 | 39 | generation_results/ |
 
-The package also contains code, four inference checkpoints, report PDF/PPTX, metrics, licensed SoundFont, and verification records. Optimizer state is removed from exported models and every weight tensor is compared against its source. Training/preprocessed data, course prompts, caches, environments, Git history, and other researchers' neural checkpoints are excluded from this package. Obtain course data separately when reproducing preparation or evaluation.
+The package also contains code, four inference checkpoints, metrics, licensed SoundFont, and verification records. Optimizer state is removed from exported models and every weight tensor is compared against its source. Training/preprocessed data, course prompts, caches, environments, Git history, and other researchers' neural checkpoints are excluded from this package. Obtain course data separately when reproducing preparation or evaluation.
 
 The course-provided POP909 version is not redistributed. Exact retraining and full
 reference-score reproduction require access to it; upstream POP909 is not a
@@ -39,12 +39,12 @@ python3 baseline/experiments/prepare_upload.py --stage audio --gain 1 --soundfon
 python3 baseline/experiments/prepare_upload.py --stage package --soundfont /path/to/GeneralUser-GS.sf2
 ```
 
-Completed outputs are not overwritten. These commands document original workflow order, not instructions to rerun already completed experiments. Use new --output/--work directories after changing sources. Packaging reads the current v7report and does not upload files or run Git.
+Completed outputs are not overwritten. These commands document original workflow order, not instructions to rerun already completed experiments. Use new --output/--work directories after changing sources. The public package excludes the report. Submit the private report directly to NTU COOL. Packaging does not upload files or run Git.
 
 ## Final handoff
 
 1. Retain all nine Task B pairs and mark preferred versions in BEST_VERSIONS.md, selections.json, and report.
-2. Replace changed README/code/report/selection/verification files in Drive. MIDI, WAV, models, and SoundFont are unchanged by the English-documentation/report update.
+2. Replace changed README/code/selection/verification files in Drive. Keep the report outside the shared folder; submit it directly to NTU COOL. MIDI, WAV, models, and SoundFont need no replacement for documentation changes.
 3. Confirm the TA can download the folder. Submit the PDF to NTU COOL and include the cloud link in its assignment comment.
 4. If editing packaged files later, refresh verification/file_manifest.json.
 

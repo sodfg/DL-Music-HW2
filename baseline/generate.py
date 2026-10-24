@@ -92,7 +92,7 @@ def main():
         p.error('Prompt requires --prompt-beats and 0 < prompt-bars < bars')
     if a.device == 'cpu':
         torch.set_num_threads(min(4,torch.get_num_threads()))
-    saved = torch.load(a.checkpoint, map_location=a.device, weights_only=False)
+    saved = torch.load(a.checkpoint, map_location=a.device, weights_only=True)
     vocab = saved['vocab']
     inverse = {i:t for t,i in vocab.items()}
     model = MusicTransformer(Config(**saved['config'])).to(a.device)

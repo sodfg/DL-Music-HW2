@@ -103,7 +103,7 @@ def main():
             or a.top_k<0 or not 1<=a.limit<=10 or a.max_events_per_bar<1):p.error('Invalid generation settings')
     if list(a.output.glob('*.mid')) or (a.output/'sequences.json').exists():p.error('Existing generated data; choose a new output')
     torch.set_num_threads(min(4,torch.get_num_threads()))
-    saved=torch.load(a.checkpoint,map_location=a.device,weights_only=False)
+    saved=torch.load(a.checkpoint,map_location=a.device,weights_only=True)
     if saved.get('kind')!='bonus_encoder_decoder' or saved['vocab']!=vocabulary():p.error('Not a compatible Bonus checkpoint')
     model=AccompanimentTransformer(Config(**saved['config'])).to(a.device);model.load_state_dict(saved['model']);model.eval()
     vocab=saved['vocab'];inverse={i:t for t,i in vocab.items()}

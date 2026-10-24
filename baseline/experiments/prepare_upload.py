@@ -87,8 +87,6 @@ def package(a):
         raise ValueError('Audio sources differ from completed preparation')
     if sha256(a.soundfont)!=plan['soundfont_sha256']:raise ValueError('SoundFont changed')
     if a.output.exists():raise ValueError('Upload destination exists; use a new destination')
-    for suffix in ('.pdf','.pptx'):
-        if not a.report.with_suffix(suffix).is_file():raise ValueError('Updated report is missing')
     models={'baseline_6':'runs/baseline/best.pt','depth_3':'runs/depth_3_vs_6/train/last.pt',
             'midi_like_6':'runs/representation_midi_like/train/last.pt',
             'bonus_accompaniment':'runs/bonus_accompaniment/train/last.pt'}
@@ -124,8 +122,6 @@ def package(a):
     assets=a.output/'audio_assets';assets.mkdir()
     shutil.copyfile(a.soundfont,assets/'GeneralUser-GS.sf2')
     shutil.copyfile(a.soundfont.parent/'GeneralUser-GS-LICENSE.txt',assets/'GeneralUser-GS-LICENSE.txt')
-    report=a.output/'report';report.mkdir()
-    for suffix in ('.pdf','.pptx'):shutil.copyfile(a.report.with_suffix(suffix),report/('B12901157_report'+suffix))
     metrics=a.output/'metrics';metrics.mkdir()
     for name in ('summary.csv','summary.md'):shutil.copyfile(Path('runs/corrected_boundary_v2')/name,metrics/('basic_and_optional_'+name))
     for name in ('metrics.csv','metrics.md','metrics.summary.json'):shutil.copyfile(Path('runs/bonus_aligned_v2')/name,metrics/('bonus_'+name))
@@ -163,8 +159,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--stage',choices=['audio','package'],required=True)
     p.add_argument('--work',type=Path,default=Path('runs/upload_preparation_v2'))
-    p.add_argument('--output',type=Path,default=Path('output/UPLOAD_HW2_B12901157'))
-    p.add_argument('--report',type=Path,default=Path('output/report/B12901157_report_draft_v7'))
+    p.add_argument('--output',type=Path,default=Path('output/submission'))
     p.add_argument('--soundfont',type=Path,required=True)
     p.add_argument('--fluidsynth',default='fluidsynth')
     p.add_argument('--gain',type=float,default=1.)

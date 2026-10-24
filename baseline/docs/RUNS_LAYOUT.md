@@ -20,4 +20,4 @@ _smoke holds execution pilots. _archive holds superseded plans, early samples, d
 
 experiments contains pre-fix generation; metrics mixes historical generated scores with reference inputs; audio_trial/listening retain old audio and legacy defaults; sampling_pilot is exploratory. These are not current submission sources. Do not blindly delete them: formal records can still reference historical inputs.
 
-New small tests should explicitly use runs/_smoke/name. Formal experiments need descriptive fresh output names plus configuration/provenance. Upload only output/UPLOAD_HW2_B12901157, not all runs. This reorganization was local, did not delete original data, and did not synchronize EDA or run Git operations.
+New small tests should explicitly use runs/_smoke/name. Formal experiments need descriptive fresh output names plus configuration/provenance. Upload only output/submission, not all runs. This reorganization was local, did not delete original data, and did not synchronize EDA or run Git operations.
