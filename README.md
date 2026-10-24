@@ -90,9 +90,9 @@ older report drafts are archived and superseded.
 | `HW2_scripts/` | Course reference scripts |
 | `POP909/`, `data/`, `runs/` | Dataset, prepared tokens, and experiment outputs; excluded from the submission package |
 
-The current source tree excludes the previously tracked course dataset. Local
-`POP909/` files remain available to their owner. Older commits still contain the
-previously tracked data: this cleanup does not rewrite history.
+The published `main` branch excludes the course dataset from both its current tree
+and its Git history. The author's local `POP909/` files and private recovery backup
+are retained separately and are not part of the public repository.
 
 See the [usage guide](baseline/README.md) for continuation, evaluation, WAV export, and experiments.
 The baseline uses custom `Bar / Beats / Pos / Tempo / Pitch / Vel / Dur` events and a 6-layer,

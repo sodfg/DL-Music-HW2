@@ -85,11 +85,11 @@ than an independent validation set in the reported configuration.
 
 ## Git tracking and private backups
 
-`POP909/` and prepared `data/` are ignored. Removing `POP909/` from the index with
-`git rm --cached` keeps its local files, and future ordinary commits omit them.
-Older commits still contain previously tracked data because this cleanup does not
-rewrite history. Keeping the repository private is a separate setting; this
-cleanup does not make the historical repository dataset-free or public.
+`POP909/` and prepared `data/` are ignored. The dataset was first untracked without
+deleting local files, then removed from the publication branch's history before
+publication. The published `main` branch contains no course-data paths in its
+current tree or history. The author retains the original Git history in a private
+local recovery backup; that backup is not published.
 
 Keep any desired dataset backup privately. The project does not promise permanent
 hosting of the course dataset. Its current inference checkpoints are supplied
