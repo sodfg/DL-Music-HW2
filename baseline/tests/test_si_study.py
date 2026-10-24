@@ -33,7 +33,7 @@ class SIStudyTests(unittest.TestCase):
                 rows=list(csv.DictReader(f))
             self.assertEqual([int(r['song_count']) for r in rows],[20]*4)
             self.assertAlmostEqual(float(rows[1]['SI_short_abs_diff_from_reference']),.1)
-            self.assertIn('抽樣', (root/'summary.md').read_text())
+            self.assertIn('sampling', (root/'summary.md').read_text())
 
     def test_mismatched_protocol_rejected(self):
         with tempfile.TemporaryDirectory() as d:

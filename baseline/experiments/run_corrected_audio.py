@@ -91,16 +91,16 @@ def summarize(root):
     with (root/'summary.csv').open('w',newline='') as f:
         w=csv.DictWriter(f,fieldnames=list(summary[0]));w.writeheader();w.writerows(summary)
     dump(root/'summary.json',{'groups':summary,'provenance':provenance,'si_protocol':protocol,'plan_sha256':sha256(root/'plan.json')})
-    lines=['# 修正生成規則後的正式結果','','Bar/Pos 各組均採 boundary-v2，模型沿用既有 checkpoint。舊 Bar/Pos 生成分數不納入下表。','',
-           '| 組別 | 首數 | H4 平均 ± 標準差 | GS 平均 ± 標準差 |','|---|---:|---:|---:|']
+    lines=['# Formal results after generation-rule correction','','All Bar/Pos groups use boundary-v2 and existing checkpoints. Historical generated scores are excluded.','',
+           '| Group | Songs | H4 mean ± standard deviation | GS mean ± standard deviation |','|---|---:|---:|---:|']
     for r in summary:lines.append(f'| {r["setting"]} | {r["song_count"]} | {r["H4_mean"]:.4f} ± {r["H4_std"]:.4f} | {r["GS_mean"]:.4f} ± {r["GS_std"]:.4f} |')
-    lines+=['','## SI：各組20首，前48秒','','| 組別 | short | mid | long |','|---|---:|---:|---:|']
+    lines+=['','## SI:20 pieces per group,first48 seconds','','| Group | short | mid | long |','|---|---:|---:|---:|']
     for r in summary:lines.append('| '+r['setting']+' | '+' | '.join(f'{r[m+"_mean"]:.4f} ± {r[m+"_std"]:.4f}' for m in ('SI_short','SI_mid','SI_long'))+' |')
-    lines+=['','- Real 的 H4/GS 為896首全曲，SI為固定seed42抽樣20首的前48秒，兩者量測範圍不同。',
-            '- 三層/六層：固定T=1、k32、p0.95、seed123–142及相同boundary-v2，僅使用各自既有模型。',
-            '- MIDI-like 沿用經驗證的20首作品和同協定分數。其時鐘/NoteOn/Off限制與Bar/Pos不同，表示法比較包含推論規則差異，不能解讀成純表示法因果效果。',
-            '- 標準差為歌曲間樣本標準差。不同詞彙表的loss不直接排名。',
-            '- Task B保留前8小節，續寫24小節。音樂選擇與雲端連結仍待使用者確認。','']
+    lines+=['','- Real H4/GS:896 full songs; SI:20seed42 sampled first48-second excerpts. Scopes differ.',
+            '- 3/6 layers:T1,k32,p0.95,seeds123–142,same boundary-v2,and existing checkpoints.',
+            '- MIDI-like reuses20verified pieces and matching-protocol scores. Clock/NoteOn/Off constraints differ,so representation comparisons include inference rules rather than isolated causal effects.',
+            '- Between-song sample standard deviation. Do not rank losses across vocabularies.',
+            '- Task B retains8prompt bars and continues24 bars. Current selections/links are recorded separately in submission_state.','']
     (root/'summary.md').write_text('\n'.join(lines))
     print('Updated summaries:',root/'summary.md',flush=True)
 

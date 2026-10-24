@@ -197,27 +197,27 @@ def main():
                 writer.writeheader()
                 writer.writerows(records)
             print(f'  {values}; original compute {details["compute_seconds"]:.2f}s; cached={cached}',flush=True)
-        title='# SI 小量試算（非正式全組評分）' if args.scope=='pilot' else '# SI 批次結果（僅涵蓋本次所選樣本）'
+        title='# SI pilot (not full-group evaluation)' if args.scope=='pilot' else '# SI batch results (selected inputs only)'
         lines=[title,'',
-               f'每組取檔名排序前 {args.limit_per_group} 首，分析第 {args.start:g} 秒起的 {args.duration:g} 秒。',
-               f'SI 時間尺度：short {args.bounds[0]:g}–{args.bounds[1]:g} 秒；'
-               f'mid {args.bounds[1]:g}–{args.bounds[2]:g} 秒；long {args.bounds[2]:g}–{args.duration:g} 秒。','',
-               '| 組別 | 首數 | SI short 平均 | SI mid 平均 | SI long 平均 | 原始計算秒數合計 |',
+               f'First{args.limit_per_group} sorted files per group; analyze{args.duration:g}s starting at{args.start:g}s.',
+               f'SI timescales:short {args.bounds[0]:g}–{args.bounds[1]:g}s;'
+               f'mid {args.bounds[1]:g}–{args.bounds[2]:g}s;long {args.bounds[2]:g}–{args.duration:g}s.','',
+               '| Group | Songs | SI short mean | SI mid mean | SI long mean | Total computation seconds |',
                '|---|---:|---:|---:|---:|---:|']
         for group in args.groups:
             subset=[r for r in records if r['group']==group]
             means=[statistics.mean(r['SI_'+name] for r in subset) for name in ('short','mid','long')]
             lines.append(f'| {group} | {len(subset)} | '+ ' | '.join(f'{x:.4f}' for x in means)
                          +f' | {sum(r["compute_seconds"] for r in subset):.2f} |')
-        scope_note=('- 這是流程與時間成本測試，不能代表 20 首生成曲或 896 首真實曲的平均。'
-                    if args.scope=='pilot' else '- 僅代表這份輸入資料，真實參考的抽樣方式見研究計畫；不能當作全部 896 首的平均。')
+        scope_note=('- This workflow/cost pilot does not represent20 generated or896 real-song averages.'
+                    if args.scope=='pilot' else '- Results cover selected inputs only; see the plan for reference sampling. Not an896-song average.')
         lines+=['',scope_note,
-                '- 不合併到原本 H4/GS 的 summary.csv，避免樣本數與片段範圍不同卻被當成同一實驗。',
-                '- 統一音色、音量設定與時間長度；時間尺度單位是秒，並非小節。',
-                '- SI 是指定範圍內的最大 fitness；不是原創性／抄襲檢測，也不是越高越好。',
-                '- 有移調與速度相似性增強；結果依照 MusDr Python 版本計算。',
-                '- 長片段運算成本增長很快，不能把本次秒數直接線性外推到完整長曲。',
-                '- 來源與設定詳見 protocol.json；逐首值見 per_piece.csv。','']
+                '- Keep separate from H4/GS summary.csv because sample counts and excerpt scopes differ.',
+                '- Match SoundFont,gain,and duration; timescales are in seconds,not bars.',
+                '- SI is maximum fitness in each range,not originality/plagiarism detection or universally higher-is-better.',
+                '- MusDr Python applies transposition/tempo similarity enhancement.',
+                '- Cost grows rapidly with excerpt length; do not extrapolate pilot time linearly to full songs.',
+                '- Sources/settings:protocol.json; per-piece values:per_piece.csv.','']
         (args.output/'summary.md').write_text('\n'.join(lines))
         print(f'Finished: {args.output}/summary.md',flush=True)
     except (ImportError,ValueError,OSError,KeyError,wave.Error) as error:

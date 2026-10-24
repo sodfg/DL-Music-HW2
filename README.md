@@ -1,7 +1,3 @@
-# 目前繳交版本
-
-先讀 [START_HERE.md](START_HERE.md)。雲端整理包在 `output/UPLOAD_HW2_B12901157/`，本版共39 MIDI＋39 WAV、四個推論模型與v5報告。Task A已選t12；Task B最佳版註記及雲端連結待補。
-
 # Piano Music Generation
 
 Train a decoder-only Transformer from scratch on the course POP909 split and generate piano MIDI.
@@ -15,6 +11,16 @@ MIDI + beat annotations → tokens → Transformer → generated tokens → MIDI
                                                                   ├─ WAV
                                                                   └─ metrics
 ```
+
+## Submission and downloads
+
+- [Google Drive: report, checkpoints, generated MIDI/WAV, and source snapshot](https://drive.google.com/drive/folders/1NRQpT-gkLJNPZY7wvyQdwWZ_qVDI4K6x?usp=sharing)
+- [GitHub: source code and documentation](https://github.com/sodfg/DL-Music-HW2)
+- [Start here](START_HERE.md) and [submission guide](baseline/docs/SUBMISSION_GUIDE.md)
+
+Selected Task A configuration: **t12**. Preferred Task B versions: **001=t08, 002=t10, 003=t08**.
+All nine Task B MIDI/WAV pairs remain in the submission. The current report is v7, with both links on its first page.
+Sharing links were supplied by the author; download permissions have not been independently verified.
 
 ## Quick start
 
@@ -52,12 +58,12 @@ not an independent validation score.
 
 **Already have a model?** Skip preparation and training and use the generation command above.
 A compatible checkpoint contains the model configuration and token vocabulary; Task A inference
-needs no dataset. No public checkpoint download is currently provided.
+needs no dataset. Download the inference checkpoints from the cloud submission folder linked above.
 
 The corrected generation and evaluation workflow is documented in
 [CORRECTED_GENERATION.md](baseline/docs/CORRECTED_GENERATION.md). Current formal
 results use `runs/corrected_boundary_v2`. Historical Bar/Pos generated scores and
-report drafts through v3 are retained as backups and are superseded.
+older report drafts are archived and superseded.
 
 ## Project layout
 
@@ -68,7 +74,9 @@ report drafts through v3 are retained as backups and are superseded.
 | `baseline/{audio,evaluation,experiments}/` | WAV rendering, metrics, and experiment runners |
 | `baseline/{representations,tests,docs}/` | Alternative tokens, tests, and detailed notes |
 | `HW2_scripts/` | Course reference scripts |
-| `POP909/`, `data/`, `runs/` | Dataset, prepared tokens, and generated artifacts; excluded from Git |
+| `POP909/`, `data/`, `runs/` | Dataset, prepared tokens, and experiment outputs; excluded from the submission package |
+
+The ignore file prevents new ignored additions; it does not remove dataset files that were already tracked.
 
 See the [usage guide](baseline/README.md) for continuation, evaluation, WAV export, and experiments.
 The baseline uses custom `Bar / Beats / Pos / Tempo / Pitch / Vel / Dur` events and a 6-layer,

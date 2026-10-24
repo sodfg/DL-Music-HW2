@@ -76,22 +76,22 @@ def summarize(root, reference):
         'reference_selection':reference_plan['reference_selection'],
         'reference_seed':reference_plan['reference_seed'],
         'reference_checkpoint_sha256':experiment['reference_checkpoint_sha256']})
-    lines=['# 表示法比較：48 秒 SI','',
-           '各 20 首，開頭 48 秒；真實組沿用 seed=42、從長度合格的 895 首中抽樣的 20 首。',
-           '兩種表示法都使用六層模型、T=1.0、top-k=32、top-p=0.95、seed=123–142。','',
-           '| 組別 | SI short 平均 ± 標準差 | SI mid 平均 ± 標準差 | SI long 平均 ± 標準差 |',
+    lines=['# Representation comparison:48-second SI','',
+           '20 songs each, first48 seconds; real reference samples20of895 eligible songs with seed42.',
+           'Both representations use six-layer models,T1,k32,p0.95,seeds123–142.','',
+           '| Group | SI short mean +/- standard deviation | SI mid mean +/- standard deviation | SI long mean +/- standard deviation |',
            '|---|---:|---:|---:|']
-    labels={'real':'真實參考','bar_pos':'Bar/Pos','midi_like':'MIDI-like'}
+    labels={'real':'Real reference','bar_pos':'Bar/Pos','midi_like':'MIDI-like'}
     for r in summary:
         lines.append('| '+labels[r['setting']]+' | '+' | '.join(f'{r[m+"_mean"]:.4f} ± {r[m+"_std"]:.4f}' for m in METRICS)+' |')
-    lines+=['','## 與真實平均的差距','','| 組別 | short | mid | long |','|---|---:|---:|---:|']
+    lines+=['','## Distance from the real mean','','| Group | short | mid | long |','|---|---:|---:|---:|']
     for r in summary[1:]:
         lines.append('| '+labels[r['setting']]+' | '+' | '.join(f'{r[m+"_abs_diff_from_reference"]:.4f}' for m in METRICS)+' |')
-    lines+=['','- short 3–8 秒，mid 8–15 秒，long 15–48 秒。',
-            '- 逐項核對完整相同的算法、wrapper 雜湊、軟體版本、音色與增益協定，才沿用舊參考分數。',
-            '- WAV 雜湊、MIDI 來源、無截波、片段長度及完整 20 首均已驗證。',
-            '- 真實組只有抽樣 20 首。H4/GS 的 896 首全曲參考與這裡不同，維持分表。',
-            '- SI 不是原創性或聽感評分，異常重複也可能得分；單訓練 seed 不推論普遍優劣。','']
+    lines+=['','- short3–8s,mid8–15s,long15–48s.',
+            '- Reference reuse requires identical algorithm/wrapper hash,versions,SoundFont,and gain protocol.',
+            '- Verified WAV hashes,MIDI sources,no clipping,excerpt length,and complete20-song groups.',
+            '- Real SI uses20 sampled excerpts; keep separate from the896-full-song H4/GS reference.',
+            '- SI is not originality or listening quality; abnormal repetition may score well. One seed does not establish universal rankings.','']
     (root/'comparison.md').write_text('\n'.join(lines))
     print(f'Verified 60 pieces: {root}/comparison.md')
 

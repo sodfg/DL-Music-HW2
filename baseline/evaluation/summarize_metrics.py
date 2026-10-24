@@ -69,26 +69,26 @@ def build_summary(paths, reference='real'):
 
 def readable_report(rows, reference='real'):
     def number(value):
-        return f'{value:.4f}' if value is not None else '未提供'
-    labels = {'real': '真實 POP909', 't08': 'Temperature 0.8',
+        return f'{value:.4f}' if value is not None else 'Unavailable'
+    labels = {'real': 'Real POP909', 't08': 'Temperature 0.8',
               't10': 'Temperature 1.0', 't12': 'Temperature 1.2'}
     def label(row):
         return labels.get(row['setting'], row['setting']).replace('|', r'\|')
     lines = [
-        '# 音樂生成評估總表', '',
-        '本頁由逐首評估 CSV 自動彙整。H4、GS 是必做指標；SI 尚未計算。', '',
-        '## 先看平均分數', '',
-        'H4：四小節內音高類別分布的熵。GS：小節間音符起始節奏的相似程度。',
-        '分數不是越高越好；依作業要求，分別比較與真實資料有多接近。', '',
-        '| 資料／設定 | 歌曲數 | H4 平均 | GS 平均 |',
+        '# Music generation metric summary', '',
+        'Aggregated from per-piece CSVs. H4 and GS are required; SI is reported separately.', '',
+        '## Mean scores', '',
+        'H4: pitch-class entropy over four bars. GS: similarity of bar-level onset patterns.',
+        'Compare each metric against the real reference; higher is not universally better.', '',
+        '| Data/setting | Songs | H4 mean | GS mean |',
         '|---|---:|---:|---:|',
     ]
     for row in rows:
         lines.append(f'| {label(row)} | {row["song_count"]} | '
                      f'{number(row["H4_mean"])} | {number(row["GS_mean"])} |')
-    lines += ['', '## 與真實資料的距離', '',
-              f'參考組：`{reference}`。下表是平均值的絕對差，越小表示該指標越接近參考組。', '',
-              '| 生成設定 | H4 差距 | GS 差距 |', '|---|---:|---:|']
+    lines += ['', '## Distance from the real reference', '',
+              f'Reference: `{reference}`. Smaller absolute mean differences indicate closer metric values.', '',
+              '| Generation setting | H4 difference | GS difference |', '|---|---:|---:|']
     for row in rows:
         if row['setting'] != reference:
             lines.append(f'| {label(row)} | {number(row["H4_abs_diff_from_reference"])} | '
@@ -100,15 +100,15 @@ def readable_report(rows, reference='real'):
         if valid:
             best = min(r[key] for r in valid)
             winners = '、'.join(label(r) for r in valid if abs(r[key]-best) < 1e-12)
-            lines += ['', f'- **{metric} 最接近參考組：{winners}**（差距 {best:.4f}）。']
-    lines += ['', '這只是各指標平均值的比較，不是統計顯著性檢定，也不代表整體音樂品質排名。',
-              '', '## 歌曲之間的差異（標準差）', '',
-              '以下為樣本標準差（n−1）。越大表示同組歌曲在該指標上的差異越大；不是越小越好，也不是信賴區間。', '',
-              '| 資料／設定 | H4 標準差 | GS 標準差 |', '|---|---:|---:|']
+            lines += ['', f'- **{metric} closest to the reference: {winners}** (difference {best:.4f}).']
+    lines += ['', 'These are mean comparisons, not significance tests or overall music-quality rankings.',
+              '', '## Between-song variation (standard deviation)', '',
+              'Sample standard deviations (n-1) describe between-song variation, not confidence intervals or a lower-is-better objective.', '',
+              '| Data/setting | H4 standard deviation | GS standard deviation |', '|---|---:|---:|']
     for row in rows:
         lines.append(f'| {label(row)} | {number(row["H4_std"])} | {number(row["GS_std"])} |')
-    lines += ['', '## 補充：H1 與資料完整性', '',
-              '| 資料／設定 | H1 平均 | H1 標準差 | 有效筆數 H1 / H4 / GS |',
+    lines += ['', '## H1 and data completeness', '',
+              '| Data/setting | H1 mean | H1 standard deviation | Valid counts H1 / H4 / GS |',
               '|---|---:|---:|---|']
     for row in rows:
         counts = ' / '.join(str(row[m+'_valid_count']) for m in METRICS)
@@ -117,12 +117,12 @@ def readable_report(rows, reference='real'):
         for metric in METRICS:
             missing = row[metric+'_missing_count']
             if missing:
-                lines += ['', f'- 注意：{label(row)} 的 {metric} 排除了 {missing} 筆缺失或非有限數值。']
-    lines += ['', '## 比較限制', '',
-              '- GS 沿用本專案共同的 64 格小節相對位置正規化。',
-              '- 真實資料是不同長度與拍點數的歌曲；生成資料固定 32 小節、每小節四拍。',
-              '- 指標不能證明旋律原創性，也不能取代試聽。',
-              '- CSV 保留完整精度；本頁顯示到小數點後四位。', '']
+                lines += ['', f'- Warning: {label(row)} excluded {missing} missing/nonfinite values for {metric}.']
+    lines += ['', '## Comparison limits', '',
+              '- GS uses the shared 64-position within-bar normalization.',
+              '- Real songs vary in length and beat count; generated pieces have32 four-beat bars.',
+              '- Metrics cannot establish originality or replace listening.',
+              '- CSV retains full precision; displayed values use four decimal places.', '']
     return '\n'.join(lines)
 
 

@@ -138,96 +138,17 @@ def package(a):
     shutil.copyfile('runs/bonus_aligned_v2/alignment_audit.json',checks/'bonus_alignment.json')
     dump(checks/'model_provenance.json',provenance)
     selections.update(task_b_export='annotated-grid-9600ppq',submission_wav_gain=done['gain'],
-                      status='DRAFT: Task B best-version labels, final listening and cloud link pending. All required audio files included.')
+                      status=('Selections complete; final review and cloud link/upload pending.' if all(selections['task_b'].values()) else 'DRAFT: Task B best-version labels and cloud link pending.'))
     dump(a.output/'selections.json',selections)
-    (a.output/'BEST_VERSIONS.md').write_text('''# 最佳版本註記
-
-Task A已選t12，完整20首全部提交。Bonus十首全部提交。
-Task B九份MIDI與WAV全部提交，每個提示另標出最佳設定。
-
-| 提示 | 最佳設定 |
-|---|---|
-| 001 | 待選：t08／t10／t12 |
-| 002 | 待選：t08／t10／t12 |
-| 003 | 待選：t08／t10／t12 |
-
-同步更新selections.json與報告Task B頁，並在報告首頁與COOL留言填雲端連結。
-''')
-    (a.output/'README.md').write_text('''# HW2 雲端上傳整理包
-
-目前為待補註記的草稿。音樂檔案已齊全，Task B每個提示的最佳版本與雲端連結仍待填入selections.json及報告。
-
-## 內容
-
-| 目錄 | 內容 |
-|---|---|
-| report | 報告PDF及可編輯PPTX。PDF另交NTU COOL |
-| generation_results/task_a_t12 | 使用者選定T=1.2，20 MIDI＋20 WAV |
-| generation_results/task_b | 001／002／003，各含t08、t10、t12，共9 MIDI＋9 WAV，全部上傳 |
-| generation_results/bonus | 十個16小節MELODY＋PIANO作品，共10 MIDI＋10 WAV |
-| models | 四個由本作業自行訓練的推論模型，無optimizer |
-| code | 本作業程式與課程評估入口 |
-| metrics | 新版Basic／Optional總表及Bonus分數 |
-| audio_assets | GeneralUser GS SoundFont與授權，供重現合成音色 |
-| verification | 檔案、音訊、MIDI刻度及模型權重核對記錄 |
-
-共39 MIDI＋39 WAV。WAV統一提高音量，PCM16 stereo／44.1kHz，所有檔案無截波。
-SI仍使用原gain0.025的評估音訊，提交WAV不覆寫或取代SI輸入。
-Task B已對齊助教拍點，32個完整4/4小節，前8小節原演奏事件時間誤差小於0.05毫秒。
-Bonus為16個標註小節，拍數隨標註變動，不強制為4/4。
-最佳版本可先填入BEST_VERSIONS.md，再同步selections.json與報告。
-
-不包含訓練資料、tokenized/preprocessed資料、快取、虛擬環境或其他人的神經網路模型。
-課程提示也不包含於本包，請從課程提供資料另行取得。模型內的vocab是推論必要設定。
-
-## 安裝與推論
-
-Python3.10+。先依CUDA環境安裝適用PyTorch，再安裝requirements.txt。原訓練為torch2.6.0+cu124／RTX A5000。
-已有符合版本的共用環境可直接使用。不需重新訓練。下列命令從本上傳包根目錄執行。
-FluidSynth需另外安裝，或以--fluidsynth指定可執行檔位置。
-
-```bash
-python3 -m pip install -r requirements.txt
-python3 code/baseline/generate.py --checkpoint models/baseline_6.pt --output generated/task_a --count 20 --bars 32 --temperature 1.2 --top-k 32 --top-p .95 --seed 123 --generation-policy boundary-v2
-python3 code/baseline/audio/render_audio.py --input generated/task_a --output generated/task_a_wav --soundfont audio_assets/GeneralUser-GS.sf2 --fluidsynth fluidsynth --gain GAIN_VALUE
-```
-
-Task B（COURSE_BASIC_B替換為課程basic-b提示資料夾）：
-
-```bash
-python3 code/baseline/generate.py --checkpoint models/baseline_6.pt --prompt COURSE_BASIC_B/001/001.mid --prompt-beats COURSE_BASIC_B/001/beat_midi.txt --prompt-bars 8 --bars 32 --count 1 --temperature 1.2 --top-k 32 --top-p .95 --seed 123 --generation-policy boundary-v2 --output generated/basic_b/001/t12
-python3 code/baseline/experiments/align_task_b.py --input-root generated/basic_b --prompts COURSE_BASIC_B --output generated/basic_b_aligned --prompt-id 001 --setting t12
-python3 code/baseline/audio/render_audio.py --input generated/basic_b_aligned/001/t12 --output generated/basic_b_wav/001/t12 --soundfont audio_assets/GeneralUser-GS.sf2 --fluidsynth fluidsynth --gain GAIN_VALUE
-```
-
-002／003與其他temperature使用對應ID與設定。每個提示請標出最喜歡的一版，九組檔案全部保留。
-
-Bonus（COURSE_BONUS替換為課程bonus提示資料夾，生成僅讀melody.mid與beat_midi.txt）：
-
-```bash
-python3 code/baseline/bonus/generate.py --checkpoint models/bonus_accompaniment.pt --prompts COURSE_BONUS --output generated/bonus
-python3 code/baseline/experiments/align_bonus.py --input generated/bonus --prompts COURSE_BONUS --output generated/bonus_aligned
-python3 code/baseline/audio/render_audio.py --input generated/bonus_aligned --output generated/bonus_wav --soundfont audio_assets/GeneralUser-GS.sf2 --fluidsynth fluidsynth --gain GAIN_VALUE
-```
-
-三層模型使用同一Basic入口，checkpoint換成models/depth_3.pt。
-MIDI-like使用code/baseline/representations/generate_midi_like.py與models/midi_like_6.pt。
-重新評估需要另取得課程資料與MusDr，參考code/baseline/README.md。
-Bonus正式MIDI可使用助教入口重新評分：
-
-```bash
-python3 code/HW2_scripts/eval_bonus.py --prompt_dir COURSE_BONUS --gen_midi_dir generation_results/bonus --output_csv new_bonus_metrics.csv
-```
-
-本包在現有本機環境驗證推論，沒有宣稱已完成全新環境安裝測試。
-
-## 上傳與繳交
-
-1. 完成Task B最佳版本註記及最終聽感。
-2. 整個資料夾上傳雲端，確認助教可以下載。
-3. 將分享連結填入報告首頁與NTU COOL作業留言，並更新report內的PDF。
-4. PDF交NTU COOL，程式、模型、音樂放雲端。
-'''.replace('GAIN_VALUE',str(done['gain'])))
+    lines=['# Preferred versions','','Task A: t12. All20 pairs are submitted. Bonus: all10 pairs.','',
+           '| Task B prompt | Preferred setting |','|---|---|']
+    for sid,setting in selections['task_b'].items():
+        lines.append(f'| {sid} | {setting or "Pending"} |')
+    lines += ['', 'All nine Task B MIDI/WAV pairs remain included.',
+              'See selections.json for sharing links. Both URLs belong on the report cover.']
+    (a.output/'BEST_VERSIONS.md').write_text('\n'.join(lines)+'\n')
+    template=Path(__file__).resolve().parents[1]/'docs/UPLOAD_README.md'
+    (a.output/'README.md').write_text(template.read_text().replace('GAIN_VALUE',str(done['gain'])))
     update_manifest(a.output)
     print(f'Prepared cloud folder: {a.output}; 39 MIDI + 39 WAV, 4 models.',flush=True)
 
@@ -243,7 +164,7 @@ def main():
     p.add_argument('--stage',choices=['audio','package'],required=True)
     p.add_argument('--work',type=Path,default=Path('runs/upload_preparation_v2'))
     p.add_argument('--output',type=Path,default=Path('output/UPLOAD_HW2_B12901157'))
-    p.add_argument('--report',type=Path,default=Path('output/report/B12901157_report_draft_v5'))
+    p.add_argument('--report',type=Path,default=Path('output/report/B12901157_report_draft_v7'))
     p.add_argument('--soundfont',type=Path,required=True)
     p.add_argument('--fluidsynth',default='fluidsynth')
     p.add_argument('--gain',type=float,default=1.)

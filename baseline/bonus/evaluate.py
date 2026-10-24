@@ -45,14 +45,14 @@ def main():
                 'song_sample_std':statistics.stdev(float(r[m]) for r in rows) if len(rows)>1 else None} for m in metrics}
     save_json(a.output.with_suffix('.summary.json'),{'songs':len(rows),'bars':total,'metrics':summary,
          'ta_evaluator_sha256':sha256(script),'note':'CA-ceiling is the same chord estimator on GT piano, not a strict theoretical upper bound'})
-    lines=['# Bonus：旋律條件伴奏生成','',f'{len(rows)} 首 × 16 小節，全部完成；原始旋律 MIDI 事件均保留。','',
-        '| 指標 | 依小節加權平均 | 歌曲間樣本標準差 |','|---|---:|---:|']
+    lines=['# Bonus: melody-conditioned accompaniment','',f'{len(rows)} songs x16 bars completed; original melody MIDI events preserved.','',
+        '| Metric | Bar-weighted mean | Between-song sample standard deviation |','|---|---:|---:|']
     for m,v in summary.items():lines.append(f'| {m} | {v["pooled_mean"]:.4f} | '+(f'{v["song_sample_std"]:.4f}' if v['song_sample_std'] is not None else '—')+' |')
-    lines+=['','- 推論僅讀 melody.mid、beat_midi.txt；piano.mid 與 chord_midi.txt 僅交給助教評分器。',
-        '- CA 使用 24 種大小三和弦估計，GT 的 unsupported/no-chord 標籤限制可達分數。',
-        '- CA-ceiling 是 GT 鋼琴通過相同估計器的參考，不保證是生成 CA 的上界。',
-        '- OA 比較每小節音高類別／力度／音長／起音間隔分布，不直接衡量伴奏是否好聽。',
-        '- 一個訓練 seed；訓練 probe 不是獨立驗證結果。完整聽感與 WAV 檢查仍須另外完成。','']
+    lines+=['','- Inference reads only melody.mid/beat_midi.txt; GT piano/chord files are evaluator-only.',
+        '- CA uses24 major/minor triads; unsupported/no-chord GT labels limit attainable scores.',
+        '- CA-ceiling is a GT-estimator reference, not a guaranteed upper bound on generated CA.',
+        '- OA compares per-bar pitch-class/velocity/duration/inter-onset distributions, not listening quality.',
+        '- One training seed; training probe is not held-out validation. Listening and WAV checks are separate.','']
     a.output.with_suffix('.md').write_text('\n'.join(lines));print(f'Complete Bonus evaluation: {a.output.with_suffix(".md")}',flush=True)
 
 

@@ -45,7 +45,7 @@ class DepthSITests(unittest.TestCase):
                 rows = list(csv.DictReader(stream))
             self.assertEqual([r['song_count'] for r in rows], ['20']*3)
             self.assertAlmostEqual(float(rows[2]['SI_long_abs_diff_from_reference']), .02)
-            self.assertIn('48 秒', (root/'comparison.md').read_text())
+            self.assertIn('48 seconds', (root/'comparison.md').read_text())
 
     def test_mismatched_protocol_and_audio_are_rejected(self):
         with tempfile.TemporaryDirectory() as temp:

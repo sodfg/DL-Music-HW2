@@ -1,20 +1,22 @@
-# HW2：目前從這裡開始
+# Start here
 
-正式上傳資料夾：**output/UPLOAD_HW2_B12901157/**。只上傳這個資料夾即可，不必上傳整個專案。
+Upload folder: **output/UPLOAD_HW2_B12901157/**. Upload this folder rather than the complete working repository.
 
-| 要找什麼 | 位置 |
+- [Cloud submission](https://drive.google.com/drive/folders/1NRQpT-gkLJNPZY7wvyQdwWZ_qVDI4K6x?usp=sharing)
+- [Source repository](https://github.com/sodfg/DL-Music-HW2)
+
+| Location | Purpose |
 |---|---|
-| 正式音樂、程式、推論模型、報告 | output/UPLOAD_HW2_B12901157/ |
-| 最新報告的工作副本 | output/report/，目前 v5 |
-| 舊報告與舊繳交包 | output/archive/ |
-| 實驗程式 | baseline/ |
-| 訓練、生成、評分、診斷的原始紀錄 | [runs用途索引](runs/00_README.md)，每個目錄有00_STATUS.md |
-| 原始資料與前處理結果 | POP909/、data/，不上傳 |
-| 助教提供的程式與外部評估工具 | HW2_scripts/ |
+| output/UPLOAD_HW2_B12901157/ | Submission code, four inference models, report, and 39 MIDI/WAV pairs |
+| output/report/ | Current editable report and PDF, v7 |
+| output/archive/ | Superseded reports and submission drafts |
+| baseline/ | Project source, tests, and documentation |
+| [runs index](runs/00_README.md) | Current results, historical results, build files, and tests |
+| POP909/ and data/ | Course dataset and prepared training data; excluded from the upload package |
+| HW2_scripts/ | Course reference scripts |
 
-目前 Task A 已選 t12。Task B 的三個提示各有 t08、t10、t12，九份全部提交，再各標一份最佳版本。
-選曲主記錄在 runs/submission_state/selections.json；上傳包內 selections.json 是這次整理的副本。
+Task A: t12. Task B preferred versions: 001=t08, 002=t10, 003=t08. Submit all nine Task B pairs.
+The source selection record is runs/submission_state/selections.json; the package contains a synchronized copy.
 
-尚待完成：Task B 最佳版註記、最終試聽、雲端分享連結。分享連結要填入報告首頁及 NTU COOL 留言。
-
-詳細整理與重現方式：[繳交整理指南](baseline/docs/SUBMISSION_GUIDE.md)。
+Remaining: replace the changed cloud files, verify download permissions, and submit the current PDF and cloud link to NTU COOL.
+See the [submission guide](baseline/docs/SUBMISSION_GUIDE.md).

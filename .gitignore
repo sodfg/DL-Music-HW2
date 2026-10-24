@@ -1,13 +1,13 @@
-# Python 快取與虛擬環境
+# Python caches and virtual environments
 __pycache__/
 *.py[cod]
 .venv/
 venv/
 
-# Notebook 暫存
+# Notebook temporary files
 .ipynb_checkpoints/
 
-# 資料集與模型輸出
+# Datasets and model outputs
 data/
 datasets/
 checkpoints/
@@ -16,10 +16,10 @@ runs/
 *.pth
 *.ckpt
 
-# 私密設定
+# Private configuration
 .env
 
-# 前處理產生的資料
+# Preprocessed outputs
 all_song_sequences.json
 tok2idx.json
 # Baseline generated artifacts and supplied dataset
@@ -33,5 +33,5 @@ HW2_scripts/MusDr/
 # Isolated local optional SI dependencies
 .venv-si/
 
-# 報告輸出
+# Report and submission outputs
 /output/

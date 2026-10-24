@@ -103,28 +103,28 @@ def write_summary(root,plan):
         writer=csv.DictWriter(stream,fieldnames=list(summary[0]))
         writer.writeheader()
         writer.writerows(summary)
-    lines=['# SI：匹配片段長度的批次比較','',
-           f'每首分析前 {plan["duration_seconds"]:g} 秒。三組生成各 20 首；真實參考為固定抽樣的 20 首。',
-           f'真實曲總數 896，符合長度條件 {plan["reference_eligible"]} 首；抽樣 seed={plan["reference_seed"]}。','',
-           '| 設定 | 首數 | SI short 平均 ± 標準差 | SI mid 平均 ± 標準差 | SI long 平均 ± 標準差 |',
+    lines=['# SI:matched-duration batch comparison','',
+           f'First{plan["duration_seconds"]:g}s; three generated groups of20and20fixed sampled real references.',
+           f'896 real songs,{plan["reference_eligible"]}length-eligible; sampling seed={plan["reference_seed"]}.','',
+           '| Setting | Songs | SI short mean +/- standard deviation | SI mid mean +/- standard deviation | SI long mean +/- standard deviation |',
            '|---|---:|---:|---:|---:|']
     for row in summary:
         values=[f'{row[m+"_mean"]:.4f} ± {row[m+"_std"]:.4f}' for m in ('SI_short','SI_mid','SI_long')]
         lines.append(f'| {row["setting"]} | {row["song_count"]} | '+' | '.join(values)+' |')
-    lines+=['','## 與這 20 首真實參考的平均差距','',
-            '| 設定 | short 差距 | mid 差距 | long 差距 |','|---|---:|---:|---:|']
+    lines+=['','## Mean differences from these20 real references','',
+            '| Setting | short difference | mid difference | long difference |','|---|---:|---:|---:|']
     for row in summary[1:]:
         values=[f'{row[m+"_abs_diff_from_reference"]:.4f}' for m in ('SI_short','SI_mid','SI_long')]
         lines.append(f'| {row["setting"]} | '+' | '.join(values)+' |')
-    lines+=['','## 解讀與限制','',
-            f'- short：3–8 秒；mid：8–15 秒；long：15–{plan["duration_seconds"]:g} 秒。',
-            '- 分數不是越高越好；接近此參考組也不等於音樂最好聽。',
-            '- 標準差是 20 首歌曲間的樣本標準差，不是信賴區間。',
-            '- 真實組只有抽樣 20 首；不足長度的曲子未參與抽樣，不能稱為全 896 首平均。',
-            '- 固定秒數代表各曲可能涵蓋不同小節數；只評估開頭片段，不能推論完整曲子結構。',
-            '- H4/GS 原表是全曲及全部 896 首參考，與本次範圍不同，維持獨立表格。',
-            '- 本研究不包含 Task B；SI 不是原創性／抄襲檢測。',
-            '- 來源、選曲與輸入雜湊見 study_plan.json，渲染記錄見 audio/，算法協定見各 groups/。','']
+    lines+=['','## Interpretation and limits','',
+            f'- short：3–8s;mid：8–15s;long：15–{plan["duration_seconds"]:g}s.',
+            '- Higher is not universally better; proximity to this reference does not imply best listening quality.',
+            '- Standard deviations describe variation across20 songs,not confidence intervals.',
+            '- Real reference samples20 length-eligible songs; this is not the mean of all896 songs.',
+            '- Fixed-duration openings can cover different bar counts and do not establish full-piece structure.',
+            '- H4/GS uses full pieces and896 real songs; report separately from excerpt-based SI.',
+            '- This study excludes Task B; SI is not originality/plagiarism detection.',
+            '- Sources,selections,and hashes:study_plan.json; render records:audio/; protocols:groups/.','']
     (root/'summary.md').write_text('\n'.join(lines))
 
 

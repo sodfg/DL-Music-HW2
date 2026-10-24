@@ -109,19 +109,19 @@ def build(output,soundfont,task_a=None,corrected_results=None,include_bonus=Fals
         'bonus_included':include_bonus,'status':'DRAFT: final listening choices, report and cloud sharing pending'})
     save_json(output/'model_provenance.json',exports)
     (output/'task_a').mkdir(exist_ok=True)
-    if not task_a:(output/'task_a/PENDING.md').write_text('尚未選定 Task A 設定。請試聽後選 t08/t10/t12，再打包20 MIDI與20 WAV。\n')
+    if not task_a:(output/'task_a/PENDING.md').write_text('Task A not selected. Listen and choose t08/t10/t12 before packaging20 MIDI+20 WAV.\n')
     (output/'README.md').write_text('''# DL in Music HW2 submission draft
 
-這是本機繳交草稿，尚未上傳。選曲、正式報告與分享權限確認後才能當成定稿。
-Task B 已包含九組 MIDI/WAV；每個 prompt 的最佳版本仍待填 selections.json。
-Task A 若未選設定，task_a/PENDING.md 會保留待補，不會代替使用者選擇。
+This is a local submission draft,not an uploaded final. Review selections,report,and sharing permissions first.
+All9Task B MIDI/WAV pairs are included; record each preferred version in selections.json.
+If Task A is unselected,task_a/PENDING.md remains; the script does not choose for the author.
 
 ## Environment
 
-Python 3.10+，PyTorch 2.5–2.6。原訓練環境：Python3.10.12、torch2.6.0+cu124、RTX A5000。
-在這個資料夾開終端機，依自己的 CUDA 環境安裝 PyTorch，再安裝 requirements.txt。
-既有共用環境若符合版本，可直接使用。音訊合成另外需要 FluidSynth 可執行檔。
-包含的 GeneralUser GS SoundFont 授權見 audio/GeneralUser-GS-LICENSE.txt。
+Python3.10+,PyTorch2.5–2.6. Original training:Python3.10.12,torch2.6.0+cu124,RTX A5000.
+From this folder,install a PyTorch build matching your CUDA/CPU environment,then requirements.txt.
+Reuse compatible shared environments. Audio rendering additionally requires FluidSynth.
+Included GeneralUser GS SoundFont license:audio/GeneralUser-GS-LICENSE.txt.
 
 ```bash
 python3 -m pip install -r requirements.txt
@@ -138,8 +138,8 @@ python3 code/baseline/audio/render_audio.py --input generated/new_a \\
   --fluidsynth fluidsynth --gain 0.025
 ```
 
-上例使用 t10，僅為可重現推論範例。正式提交設定以 selections.json 為準。
---output 可換成任何可寫入的新目錄。程式會依 CUDA 可用性選 GPU 或 CPU。
+The t10example demonstrates inference; formal selections are recorded in selections.json.
+Use a fresh writable --output. GPU/CPU selection follows CUDA availability.
 
 ## Basic Task B: preserve prompt and generate continuation
 
@@ -153,13 +153,13 @@ python3 code/baseline/audio/render_audio.py --input generated/new_b_001 \\
   --fluidsynth fluidsynth --gain 0.025
 ```
 
-002/003 使用對應 prompts 子資料夾。t08/t10/t12 分別設定 temperature=0.8/1.0/1.2。
-提供的是原始提示檔，沒有訓練集或前處理資料。
+Use matching prompt folders for002/003; t08/t10/t12 set temperatures0.8/1.0/1.2.
+Only the original prompts are provided here,not training or preprocessed data.
 
 ## Optional models
 
-models/depth_3.pt 可使用同一個 code/baseline/generate.py 推論。
-models/midi_like_6.pt 使用下列獨立入口：
+models/depth_3.pt uses the same code/baseline/generate.py inference entry point.
+models/midi_like_6.pt uses this separate entry point:
 
 ```bash
 python3 code/baseline/representations/generate_midi_like.py \\
@@ -167,19 +167,19 @@ python3 code/baseline/representations/generate_midi_like.py \\
   --count 20 --bars 32 --temperature 1.0 --top-k 32 --top-p 0.95
 ```
 
-模型匯出只保存推論需要的 model/config/vocab，移除了 optimizer 與隨機狀態。
-所有權重張量已與原始 checkpoint 逐項比對一致。來源與雜湊見 model_provenance.json。
-experiment_tables 提供已完成比較的摘要，重訓程式僅供原專案資料環境使用。
-未實作 Bonus 伴奏任務，不宣稱已完成。
+Model export retains inference model/config/vocab only,without optimizer or RNG state.
+All weight tensors match the source checkpoint. See model_provenance.json for sources/hashes.
+experiment_tables summarizes completed comparisons; training scripts need the original project data environment.
+This draft does not include Bonus accompaniment.
 ''')
     readme=output/'README.md'
     contents=readme.read_text()
     if corrected_results:
         contents=contents.replace('--seed 123\n','--seed 123 --generation-policy boundary-v2\n')
         contents=contents.replace('--output generated/new_b_001\n','--output generated/new_b_001 --generation-policy boundary-v2\n')
-        contents+='\n正式 Bar/Pos 成果採 boundary-v2。上述規則同樣適用三層模型。舊生成分數不納入本包。\n'
+        contents+='\nFormal Bar/Pos uses boundary-v2,also for the three-layer model. Historical generated scores are excluded.\n'
     if include_bonus:
-        contents=contents.replace('未實作 Bonus 伴奏任務，不宣稱已完成。','Bonus 已包含10份旋律加伴奏 MIDI、10份 WAV、獨立模型與評分。')
+        contents=contents.replace('This draft does not include Bonus accompaniment.','Bonus includes10melody-plus-accompaniment MIDI,10 WAV,a separate model,and metrics.')
         contents+='''
 ## Bonus inference
 
@@ -188,7 +188,7 @@ python3 code/baseline/bonus/generate.py --checkpoint models/bonus_accompaniment.
 python3 code/baseline/audio/render_audio.py --input generated/new_bonus --output generated/new_bonus_wav --soundfont audio/GeneralUser-GS.sf2 --fluidsynth fluidsynth --gain 0.025
 ```
 
-Bonus 提示只含 melody.mid、beat_midi.txt，不包含 GT 伴奏或和弦答案。
+Bonus prompts include only melody.mid/beat_midi.txt,not GT accompaniment/chord answers.
 '''
     readme.write_text(contents)
     files={p.relative_to(output).as_posix():sha256(p) for p in output.rglob('*') if p.is_file()}

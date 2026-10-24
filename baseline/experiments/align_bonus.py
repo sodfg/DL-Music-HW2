@@ -93,9 +93,9 @@ def summarize_metrics(folder):
         metrics[k]={'pooled_mean':statistics.mean(values),'song_sample_std':statistics.stdev(values)}
     note='Aligned MIDI reevaluated with untouched TA evaluator. All ten songs have 16 bars. Tiny tick retiming can change duration/IOI histogram bins. CA-ceiling is a GT-estimator reference, not a theoretical upper bound.'
     dump(folder/'metrics.summary.json',{'songs':10,'bars':160,'metrics':metrics,'ta_evaluator_sha256':sha256(Path('HW2_scripts/eval_bonus.py')),'note':note})
-    lines=['# Bonus：正式上傳 MIDI 的重新評分','', '10 首、160 小節。使用助教原始 eval_bonus.py。','', '| 指標 | 平均 | 歌曲間標準差 |','|---|---:|---:|']
+    lines=['# Bonus:reevaluation of final submission MIDI','', '10 songs,160 bars,using the unchanged TA eval_bonus.py.','', '| Metric | mean | Between-song standard deviation |','|---|---:|---:|']
     lines += [f"| {k} | {v['pooled_mean']:.4f} | {v['song_sample_std']:.4f} |" for k,v in metrics.items()]
-    lines += ['', '匯出依標註拍點調整 MIDI 刻度，保留演奏事件，時間誤差小於 0.05 毫秒。微小誤差可能改變音長／IOI 的直方圖分箱，因此本表重新評估全部十首。', 'CA-ceiling 是同一估計器在真實鋼琴上的參考值，不是嚴格理論上限。']
+    lines += ['', 'Beat-aligned export preserves performance events within0.05ms. Tiny retiming can change duration/IOI histogram bins,so all10 pieces were reevaluated.', 'CA-ceiling is the same estimator on GT piano,not a strict theoretical bound.']
     (folder/'metrics.md').write_text('\n'.join(lines)+'\n')
     return metrics
 

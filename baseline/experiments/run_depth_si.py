@@ -128,27 +128,27 @@ def write_report(root, plan):
             writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
             writer.writeheader()
             writer.writerows(rows)
-    lines = ['# 深度實驗：3 層與 6 層的 SI 比較', '',
-             '每組 20 首，每首分析開頭 48 秒；生成設定均為 temperature=1.0、top-k=32、top-p=0.95、seed=123–142。',
-             f'真實組沿用原 SI 研究 seed={plan["reference_seed"]} 的 20 首，從 {plan["reference_eligible"]} 首符合長度條件的曲目抽樣。', '',
-             '| 組別 | 首數 | SI short 平均 ± 標準差 | SI mid 平均 ± 標準差 | SI long 平均 ± 標準差 |',
+    lines = ['# Depth experiment:3- versus6-layer SI', '',
+             '20 pieces per group,first48 seconds; generation:T1,k32,p0.95,seeds123–142.',
+             f'Real reference reuses20 songs sampled from{plan["reference_eligible"]}eligible songs with seed{plan["reference_seed"]}.', '',
+             '| Group | Songs | SI short mean +/- standard deviation | SI mid mean +/- standard deviation | SI long mean +/- standard deviation |',
              '|---|---:|---:|---:|---:|']
-    labels = {'real': '真實參考', 'layers6': '6 層 Transformer', 'layers3': '3 層 Transformer'}
+    labels = {'real': 'Real reference', 'layers6': '6-layer Transformer', 'layers3': '3-layer Transformer'}
     for row in summary:
         lines.append(f'| {labels[row["setting"]]} | 20 | ' + ' | '.join(
             f'{row[m+"_mean"]:.4f} ± {row[m+"_std"]:.4f}' for m in METRICS) + ' |')
-    lines += ['', '## 與真實參考的平均差距', '',
-              '| 模型 | short 差距 | mid 差距 | long 差距 |', '|---|---:|---:|---:|']
+    lines += ['', '## Mean differences from the real reference', '',
+              '| Model | short difference | mid difference | long difference |', '|---|---:|---:|---:|']
     for row in summary[1:]:
         lines.append(f'| {labels[row["setting"]]} | ' + ' | '.join(
             f'{row[m+"_abs_diff_from_reference"]:.4f}' for m in METRICS) + ' |')
-    lines += ['', '- short：3–8 秒；mid：8–15 秒；long：15–48 秒。',
-              '- 同一 SoundFont、FluidSynth 版本、gain=0.025；所有 WAV 驗證來源及雜湊，無截波。',
-              '- 沿用真實組與六層的 WAV，但三組均由同一版 SI 程式重新計算；未訓練或生成新的 MIDI。',
-              '- 標準差是歌曲間的樣本標準差；只有一個訓練 seed，不能推論普遍優劣。',
-              '- SI 衡量重複結構，接近參考不等於較好聽，也不代表原創性。',
-              '- 真實參考只有 20 首，且只量測前 48 秒；與全曲、896 首參考的 H4/GS 表維持分開。',
-              '- 設定與來源見 study_plan.json、各 groups/*/protocol.json；逐首分數見 per_piece.csv。', '']
+    lines += ['', '- short：3–8s;mid：8–15s;long：15–48 seconds。',
+              '- Same SoundFont,FluidSynth version,and gain0.025; source/WAV hashes verified,no clipping.',
+              '- Reuse real/six-layer WAVs but recompute all groups with one SI version; no new training/MIDI generation.',
+              '- Between-song sample standard deviation; one training seed cannot establish universal superiority.',
+              '- SI measures repeated structure; reference proximity does not establish listening quality or originality.',
+              '- Real reference uses20opening48-second excerpts; keep separate from896-full-song H4/GS.',
+              '- Settings/sources:study_plan.json and groups/*/protocol.json; per-piece scores:per_piece.csv.', '']
     (root/'comparison.md').write_text('\n'.join(lines))
 
 

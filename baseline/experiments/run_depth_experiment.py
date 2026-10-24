@@ -136,27 +136,27 @@ def report(root,plan,reference_csv,real_csv):
         writer=csv.DictWriter(f,fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-    lines=['# 模型深度比較：3 層 vs 6 層','',
-           '相同表示法、896 首、context 1024、batch 8、20000 步、seed 42；只改層數。',
-           '生成固定 temperature 1.0、top-k 32、top-p 0.95、seed 123–142，每模型 20 首 32 小節。','',
-           '| 模型 | 參數量 | H4 平均 ± 標準差 | GS 平均 ± 標準差 |', '|---|---:|---:|---:|']
+    lines=['# Model depth:3 versus6 layers','',
+           'Same representation,896 songs,context1024,batch8,20000 steps,seed42; change depth.',
+           'Generation:T1,k32,p0.95,seeds123–142;20 pieces of32 bars per model.','',
+           '| Model | Parameters | H4 mean ± standard deviation | GS mean ± standard deviation |', '|---|---:|---:|---:|']
     for row in rows:
         lines.append(f'| {row["model"]} | {row["parameters"]:,} | {row["H4_mean"]:.4f} ± {row["H4_std"]:.4f} | '
                      f'{row["GS_mean"]:.4f} ± {row["GS_std"]:.4f} |')
-    lines+=['',f'原始 896 首全曲參考：H4={real["H4_mean"]:.4f}，GS={real["GS_mean"]:.4f}。',
-            '', '| 模型 | H4 與真實平均差距 | GS 與真實平均差距 |', '|---|---:|---:|']
+    lines+=['',f'896-full-song reference:H4={real["H4_mean"]:.4f},GS={real["GS_mean"]:.4f}.',
+            '', '| Model | H4 absolute mean difference | GS absolute mean difference |', '|---|---:|---:|']
     for row in rows:
         lines.append(f'| {row["model"]} | {row["H4_abs_diff_from_real"]:.4f} | {row["GS_abs_diff_from_real"]:.4f} |')
-    lines+=['','## 限制與下一步','',
-            '- 固定步數與資料抽樣，近似固定訓練 token 預算；運算量不相同。',
-            '- 只有一個訓練 seed，不宣稱統計顯著性。',
-            '- 全部資料參與訓練，training_probe 不能當作獨立驗證成績。',
-            '- 六層使用已確認為第 20000 步的 best.pt；三層固定使用第 20000 步 last.pt。',
-            '- H4/GS 均使用相同 64 格正規化；與真實資料的差距及試聽仍須一起判斷。',
-            '- SI 尚未加入本次深度比較；確認新曲長度後，才能選一致的分析範圍。',
-            '- 三層程序 wall time 記於 execution.json，含初始化、讀檔與最後存檔；',
-            '  六層舊記錄缺同一定義的成本量測，不能直接拿兩種計時宣稱加速比。',
-            '- baseline 的模型與既有生成結果未被覆蓋。','']
+    lines+=['','## Limits and next steps','',
+            '- Fixed steps/sampling approximate a fixed token budget,not equal computation.',
+            '- One training seed; no statistical significance claim.',
+            '- All songs participate in training; training_probe is not held-out validation.',
+            '- Six layers:verified step20000 best.pt; three layers:step20000 last.pt.',
+            '- H4/GS share64-position normalization; consider reference differences alongside listening.',
+            '- SI is separate; verify generated lengths before selecting a matched analysis scope.',
+            '- Three-layer process wall time in execution.json includes initialization,loading,and final saving;',
+            '  six-layer logs lack equivalent timing,so do not infer a speedup ratio from incompatible definitions.',
+            '- Existing baseline models/generated files were not overwritten.','']
     (root/'comparison.md').write_text('\n'.join(lines))
 
 

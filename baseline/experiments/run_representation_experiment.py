@@ -88,32 +88,32 @@ def report(root, plan):
         writer=csv.DictWriter(stream,fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-    lines=['# Token 表示法比較：Bar/Pos 與 MIDI-like','',
-           '固定 896 首、相同量化音符與速度、6 層、width 512、context 1024、batch 8、20000 步、seed 42。',
-           '每組生成 20 首 32 小節（四拍），T=1.0、top-k=32、top-p=0.95、seed=123–142。','',
-           '| 表示法 | 參數量 | H4 平均 ± 標準差 | GS 平均 ± 標準差 |','|---|---:|---:|---:|']
+    lines=['# Token representation:Bar/Pos versus MIDI-like','',
+           '896 songs,same quantized notes/tempos,6 layers,width512,context1024,batch8,20000 steps,seed42.',
+           '20 pieces of32 four-beat bars per group,T1,k32,p0.95,seeds123–142.','',
+           '| Representation | Parameters | H4 mean ± standard deviation | GS mean ± standard deviation |','|---|---:|---:|---:|']
     for r in rows:
         lines.append(f'| {r["representation"]} | {r["parameters"]:,} | {r["H4_mean"]:.4f} ± {r["H4_std"]:.4f} | '
                      f'{r["GS_mean"]:.4f} ± {r["GS_std"]:.4f} |')
-    lines += ['',f'全 896 首全曲參考：H4={real["H4_mean"]:.4f}，GS={real["GS_mean"]:.4f}。','',
-              '| 表示法 | H4 平均差距 | GS 平均差距 |','|---|---:|---:|']
+    lines += ['',f'896-full-song reference:H4={real["H4_mean"]:.4f},GS={real["GS_mean"]:.4f}.','',
+              '| Representation | H4 meandifference | GS meandifference |','|---|---:|---:|']
     for r in rows:
         lines.append(f'| {r["representation"]} | {r["H4_abs_diff_from_real"]:.4f} | {r["GS_abs_diff_from_real"]:.4f} |')
     prep=plan['preparation']
-    lines += ['', '## 比較範圍與限制', '',
-        f'- Bar/Pos 共 {prep["totals"]["baseline_tokens"]:,} tokens；MIDI-like 共 {prep["totals"]["midi_like_tokens"]:,} tokens。',
-        f'- 全資料平均估算每 1024 tokens 覆蓋 {prep["baseline_approx_beats_per_1024_tokens"]:.2f} / '
-        f'{prep["midi_like_approx_beats_per_1024_tokens"]:.2f} 拍；不是每個 crop 都相同。',
-        '- 模型層數等設定相同；詞彙表不同會使 embedding 與總參數量略有差異。',
-        '- 固定訓練 token 預算，不是固定看到的音符數、epoch、音樂秒數或 FLOPs。',
-        '- MIDI-like 的 TimeShift 單位是 1/16 拍；不是毫秒。沒有 Bar/Pos/Beats 模型 token。',
-        '- 保留每小節 Tempo 事件；生成器以外部四拍時鐘限制 32 小節，並非完全沒有小節結構提示。',
-        '- 兩組都使用合法序列限制、每小節至少一個音符、每小節最多 128 次 onset；兩種語法的合法候選集合不同。',
-        '- MIDI-like 生成限制音符最長 256 格；同音高重疊以 MIDI 事件數量保留。',
-        '- sequences.json 是僅供 H4/GS 的 onset view；實際模型 tokens 在 event_sequences.json，音訊應使用輸出 MIDI。',
-        '- 本次只做 Task A 的表示法比較；不替換已完成的 Task B，也不宣稱是標準 MidiTok tokenizer。',
-        '- 不同比例詞彙表的交叉熵不可直接當成音樂品質排行榜。只有一個訓練 seed，需搭配試聽。',
-        '- SI 另依相同 48 秒方案補算，不在此表假裝已完成。','']
+    lines += ['', '## Comparison scope and limitations', '',
+        f'- Bar/Pos:{prep["totals"]["baseline_tokens"]:,}tokens; MIDI-like:{prep["totals"]["midi_like_tokens"]:,}tokens.',
+        f'- Dataset-average estimated beats per1024 tokens: {prep["baseline_approx_beats_per_1024_tokens"]:.2f} / '
+        f'{prep["midi_like_approx_beats_per_1024_tokens"]:.2f} beats; individual crops can differ.',
+        '- Same architecture settings; vocabularies change embedding and total parameter counts.',
+        '- Fixed training-token budget,not equal notes,epochs,music seconds,or FLOPs.',
+        '- MIDI-like TimeShift uses1/16beat,not milliseconds. No learned Bar/Pos/Beats tokens.',
+        '- Per-bar Tempo events remain; an external4-beat clock enforces32 bars,so bar-structure cues remain.',
+        '- Both enforce valid sequences,at least1note and at most128 onsets per bar,but legal candidate sets differ.',
+        '- MIDI-like caps notes at256 steps and retains overlapping same-pitch MIDI events.',
+        '- sequences.json is the H4/GS onset view; actual events are in event_sequences.json. Render the MIDI for audio.',
+        '- Task A representation comparison only; does not replace Task B or claim standard MidiTok compatibility.',
+        '- Cross-entropy across vocabularies is not a music-quality ranking. One seed; listening is still required.',
+        '- SI is evaluated separately with matching48-second excerpts.','']
     (root/'comparison.md').write_text('\n'.join(lines))
 
 

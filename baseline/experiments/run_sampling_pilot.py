@@ -58,30 +58,30 @@ def write_report(root):
     with (root/'overlap_diagnostic.csv').open('w',newline='') as stream:
         writer=csv.DictWriter(stream,fieldnames=list(rows[0]))
         writer.writeheader();writer.writerows(rows)
-    lines=['# REMI-like 抽樣小比較（各 3 首，非正式 20 首評分）','',
-           '相同六層 checkpoint、T=1.0、seed=123–125、32 小節；A 沿用既有 t10 的前三首。',
-           'A→B 只改 top-k；B→C 只改 top-p。相同 seed 讓比較條件一致，不代表生成相同歌曲。','',
-           '| 組別 | Temperature | Top-k | Top-p |','|---|---:|---:|---:|']
+    lines=['# REMI-like sampling pilot (3 pieces each,not formal20-song evaluation)','',
+           'Same6-layer checkpoint,T1,seeds123–125,32 bars; A reuses the first3historical t10 pieces.',
+           'A-to-B changes only k; B-to-C changes only p. Matching seeds does not produce identical songs.','',
+           '| Group | Temperature | Top-k | Top-p |','|---|---:|---:|---:|']
     for label,(k,p) in SETTINGS.items():lines.append(f'| {label} | 1.0 | {k} | {p} |')
-    lines+=['','## 配對試聽','', '| Seed | A：原設定 | B：放寬 k | C：再放寬 p |', '|---|---|---|---|']
+    lines+=['','## Paired listening','', '| Seed | A:original | B:wider k | C:wider p |', '|---|---|---|---|']
     for i in range(3):
         links=[f'[sample_{i:03d}]({label}/sample_{i:03d}.mid)' for label in SETTINGS]
         lines.append(f'| {123+i} | '+' | '.join(links)+' |')
-    lines+=['','## 組內 pitch 4-gram 重疊診斷','',
-            '把音符按 token 順序排列，計算每組三首間連續四個音高片段集合的 Jaccard 重疊率。',
-            '包含和弦／伴奏排列，忽略節奏、力度及移調；不是旋律辨識、抄襲檢測或音樂品質指標。',
-            '重疊率較低只表示這種表示下的共同片段較少，不代表更好聽。每組只有三首，結果僅供探索。','',
-            '| 組別 | 前 4 小節重疊率 | 全 32 小節重疊率 |','|---|---:|---:|']
+    lines+=['','## Within-group pitch4-gram overlap diagnostic','',
+            'Jaccard overlap of pitch4-gram sets in token order among the three pieces per group.',
+            'Includes chord/accompaniment order; ignores rhythm,velocity,transposition. Not melody identification,plagiarism detection,or quality.',
+            'Lower overlap means fewer shared fragments,not better music. Only3 pieces per group; exploratory results.','',
+            '| Group | First4 bars overlap | All32 bars overlap |','|---|---:|---:|']
     for label in SETTINGS:
         values=[next(r['mean_pitch_4gram_jaccard'] for r in rows if r['setting']==label and r['bars']==b) for b in (4,32)]
         lines.append(f'| {label} | {values[0]:.1%} | {values[1]:.1%} |')
-    lines+=['','## 聽感紀錄（待使用者填寫）','',
-            '| 組別 | 前奏是否相似 | 曲內重複是否突兀 | 節奏／旋律是否自然 | 偏好及時間點 |',
+    lines+=['','## Listening notes (author input)','',
+            '| Group | Similar introductions | Abrupt repetition | Rhythm/melody naturalness | Preference and timestamps |',
             '|---|---|---|---|---|']
-    for label in SETTINGS:lines.append(f'| {label} | 待聽 | 待聽 | 待聽 | |')
-    lines+=['','- top-k 和 top-p 在合法事件集合上共同作用；改參數不保證每一步候選集合都會改變。',
-            '- 增加隨機性可能提高變化，也可能使音樂更不連貫；不直接推薦重疊率最低的一組。',
-            '- 尚未依此選正式繳交版本；確認偏好後才擴充到 20 首及正式評分。','']
+    for label in SETTINGS:lines.append(f'| {label} | Pending listening | Pending listening | Pending listening | |')
+    lines+=['','- top-k/top-p act jointly on legal events; parameter changes may leave some candidate sets unchanged.',
+            '- More randomness can increase variation or reduce coherence; minimum overlap is not an automatic recommendation.',
+            '- This pilot does not select the formal submission; extend to20 pieces/evaluation only after preference review.','']
     (root/'comparison.md').write_text('\n'.join(lines))
 
 
