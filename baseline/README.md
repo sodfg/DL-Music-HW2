@@ -1,6 +1,7 @@
 # Usage guide
 
-Start with the [project README](../README.md) for installation, data layout, training, and generation.
+Start with the [project README](../README.md) and the
+[data access guide](docs/DATA_ACCESS.md) for pretrained inference and retraining limitations.
 Run every command below from the repository root. Dataset files, checkpoints, audio, and results
 are stored outside Git; a fresh clone does not contain them.
 
@@ -100,7 +101,7 @@ Use `--fluidsynth /path/to/fluidsynth` if the executable is not on PATH. Keep th
 gain, and rendering settings across audio comparisons. SI has separate dependencies in
 `baseline/requirements-si.txt`; it is not needed for MIDI generation or H4/GS.
 
-Detailed experiment notes are currently in Traditional Chinese:
+Detailed experiment notes are in English:
 
 | Experiment | Notes |
 |---|---|

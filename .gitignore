@@ -22,8 +22,9 @@ runs/
 # Preprocessed outputs
 all_song_sequences.json
 tok2idx.json
-# Baseline generated artifacts and supplied dataset
+# Private course dataset, including prompts; retained locally, not redistributed
 POP909/
+# Baseline generated artifacts and external evaluation checkout
 *.log
 HW2_scripts/MusDr/
 

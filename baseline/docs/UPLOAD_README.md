@@ -27,6 +27,12 @@ Task B exports align8prompt+24continuation bars with timing error below0.05ms. B
 
 The package excludes training/preprocessed data,course prompts,caches,virtual environments,Git history,and other researchers' neural checkpoints. The embedded checkpoint vocabulary is necessary inference configuration. Obtain course data separately for preparation,prompted generation,and evaluation.
 
+The course-provided, preprocessed POP909 split is not redistributed by this project.
+Exact retraining requires that course version; the original upstream POP909 release
+is not a drop-in replacement. Task A inference with the included checkpoint needs
+no dataset. Task B and Bonus require compatible external prompt MIDI/beat annotations.
+See [data access and reproducibility](code/baseline/docs/DATA_ACCESS.md).
+
 ## Install and run inference
 
 Python3.10+. Install a PyTorch build appropriate for your CPU/CUDA environment,then requirements.txt. Original training used torch2.6.0+cu124 on an RTX A5000. A compatible existing shared environment can be reused. Pretrained checkpoints are included,so no retraining is needed. Run commands from this package root.

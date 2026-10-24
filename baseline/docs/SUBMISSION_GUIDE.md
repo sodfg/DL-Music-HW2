@@ -15,6 +15,11 @@ Use output/UPLOAD_HW2_B12901157 rather than the complete repository.
 
 The package also contains code, four inference checkpoints, report PDF/PPTX, metrics, licensed SoundFont, and verification records. Optimizer state is removed from exported models and every weight tensor is compared against its source. Training/preprocessed data, course prompts, caches, environments, Git history, and other researchers' neural checkpoints are excluded from this package. Obtain course data separately when reproducing preparation or evaluation.
 
+The course-provided POP909 version is not redistributed. Exact retraining and full
+reference-score reproduction require access to it; upstream POP909 is not a
+drop-in replacement. Task A pretrained inference needs no dataset. See the
+[data access guide](DATA_ACCESS.md) for supported paths and limitations.
+
 ## Fixes reflected in the report
 
 - Basic final-bar masking and duplicate-onset handling were corrected with boundary-v2. Existing checkpoints were reused to regenerate/reassess89Bar/Pos samples. Historical generated scores are not mixed into current tables.
